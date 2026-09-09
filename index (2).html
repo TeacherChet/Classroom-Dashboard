@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Classroom Dashboard</title>
+<style>
+  :root {
+    --navy: #1F3A5F;
+    --navy-dark: #162944;
+    --navy-light: #2A4A72;
+    --rust: #B5563C;
+    --rust-dark: #8f4330;
+    --gold: #C9A24B;
+    --gold-light: #E0C687;
+    --white: #FFFFFF;
+    --dark-text: #222222;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Calibri', 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--navy-dark);
+    color: var(--white);
+    padding: 14px 18px 20px;
+  }
+
+  .dash-title {
+    margin-bottom: 12px; display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; max-width: 1500px; margin-left: auto; margin-right: auto;
+  }
+  .dash-title > div:first-child { display: flex; align-items: center; gap: 12px; }
+  .dash-title h1 {
+    color: var(--gold);
+    font-size: 1.4rem;
+    margin: 0;
+  }
+
+  #focusModeGrid { display: flex; gap: 16px; max-width: 1500px; margin: 0 auto; align-items: flex-start; }
+  #focusSlidesCol { flex: 2; display: flex; flex-direction: column; gap: 14px; }
+  #focusSideCol { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  #focusPinnedCol { display: flex; flex-direction: column; gap: 10px; }
+  #focusDropdownCol {
+    display: flex; flex-direction: column; gap: 6px;
+    border-top: 1px solid var(--navy-light); padding-top: 10px; margin-top: 4px;
+  }
+  .focus-dropdown-item {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--navy-light); border-radius: 8px;
+  }
+  .focus-dropdown-item summary {
+    padding: 8px 12px; cursor: pointer; font-weight: 800; color: var(--gold-light);
+    font-size: 0.82rem; letter-spacing: 0.4px; text-transform: uppercase; list-style: none;
+  }
+  .focus-dropdown-item summary::-webkit-details-marker { display: none; }
+  .focus-dropdown-item summary::before { content: '\25b8'; margin-right: 6px; display: inline-block; }
+  .focus-dropdown-item[open] summary::before { content: '\25be'; }
+  .focus-dropdown-item > *:not(summary) { padding: 0 12px 12px; }
+  .focus-slides-wrap .center-block { margin-bottom: 0; }
+  .dash-title .subtitle {
+    font-style: italic;
+    opacity: 0.8;
+    font-size: 0.8rem;
+    margin: 0;
+  }
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .clock-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .clock-date { font-size: 1.1rem; font-weight: 700; }
+  .clock-time { font-size: 1rem; color: var(--gold-light); font-variant-numeric: tabular-nums; }
+  .school-day { font-size: 0.85rem; color: var(--gold-light); opacity: 0.9; }
+  .timer-widget { display: flex; flex-direction: row; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .timer-title { font-size: 0.78rem; color: var(--gold-light); font-weight: 800; }
+  .timer-display { font-size: 1.3rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--gold); }
+  .timer-display.done { color: var(--rust); animation: timerFlash 1s infinite; }
+  @keyframes timerFlash { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .timer-widget input[type="number"] { width: 42px; text-align: center; padding: 3px 4px; font-size: 0.78rem; }
+
+  .shareout-discuss { margin-bottom: 10px; }
+  .shareout-discuss-label {
+    display: block; font-size: 0.78rem; font-weight: 800; color: var(--gold-light);
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px;
+  }
+  .shareout-discuss-input {
+    width: 100%; resize: vertical;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--navy-light); border-radius: 8px;
+    padding: 6px 10px; font-size: 0.85rem; line-height: 1.4; font-family: inherit; color: var(--white);
+  }
+  .shareout-discuss-input:focus { outline: none; border-color: var(--gold); }
+  .shareout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .shareout-panel { display: flex; flex-direction: column; gap: 6px; }
+  .shareout-label {
+    background: transparent; border: none; border-bottom: 1px solid var(--navy-light);
+    color: var(--gold-light); font-weight: 800; font-size: 0.82rem; padding: 3px 2px;
+  }
+  .shareout-label:focus { outline: none; border-bottom-color: var(--gold); }
+  .shareout-text {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--navy-light); border-radius: 8px;
+    padding: 8px 10px; font-size: 0.85rem; line-height: 1.45; min-height: 160px; outline: none;
+  }
+  .shareout-text:empty::before { content: attr(data-placeholder); opacity: 0.4; font-style: italic; }
+  .shareout-text:focus { border-color: var(--gold); }
+  @media (max-width: 800px) {
+    .shareout-grid { grid-template-columns: 1fr; }
+  }
+
+  .picker-controls { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .picker-controls select { flex: 1 1 120px; }
+  .picker-result-row { font-size: 0.85rem; padding: 4px 0; }
+  .picker-result-row .picker-label { font-weight: 800; color: var(--gold); margin-right: 6px; }
+  .wheel-outer { position: relative; width: 210px; height: 210px; margin: 6px auto 4px; }
+  .wheel-pointer {
+    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    font-size: 20px; color: var(--gold); z-index: 2; line-height: 1;
+  }
+  #pickerWheelCanvas {
+    border-radius: 50%; display: block; border: 3px solid var(--navy-light);
+    transition: transform 4.5s cubic-bezier(0.12, 0.67, 0.1, 1);
+  }
+  .wheel-result { text-align: center; font-weight: 800; font-size: 1rem; color: var(--gold); margin-top: 8px; min-height: 1.4em; }
+
+  /* ---- Sheet sync strip ---- */
+  .sync-panel {
+    max-width: 1500px;
+    margin: 0 auto 12px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+  }
+  .sync-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .sync-status { color: var(--gold-light); flex: 1 1 200px; }
+  .sync-status.error { color: var(--rust); }
+  .sync-panel input[type="text"] {
+    background: var(--navy); color: var(--white); border: 1px solid var(--navy-light);
+    border-radius: 5px; padding: 5px 8px; font-family: inherit; font-size: 0.78rem; flex: 1 1 220px;
+  }
+  .sync-panel details { margin-top: 6px; opacity: 0.9; }
+  .sync-panel summary { cursor: pointer; color: var(--gold-light); font-weight: 700; }
+  .sync-panel ol { margin: 6px 0 0; padding-left: 18px; line-height: 1.5; }
+  .sync-panel code { background: rgba(255,255,255,0.12); padding: 1px 5px; border-radius: 3px; }
+
+  /* ---- Grid layout ---- */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr 1fr;
+    grid-template-areas:
+      "left center topright"
+      "left center bottomright";
+    gap: 14px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+  .zone-left { grid-area: left; display: flex; flex-direction: column; gap: 12px; }
+  .zone-topright { grid-area: topright; display: flex; flex-direction: column; gap: 12px; }
+  .zone-bottomright { grid-area: bottomright; display: flex; flex-direction: column; gap: 12px; }
+  .zone-center { grid-area: center; }
+
+  @media (max-width: 1050px) {
+    .dashboard-grid { grid-template-columns: 1fr; grid-template-areas: "left" "topright" "center" "bottomright"; }
+    #focusModeGrid { flex-direction: column; }
+  }
+
+  .box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--navy-light);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .box h2 {
+    margin: 0 0 8px;
+    color: var(--gold);
+    font-size: 0.82rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .scroll-box { /* attendance roster: no max-height, so it expands to fit every student */ }
+  .events-scroll-box { max-height: 480px; overflow-y: auto; }
+
+  .btn {
+    border: none; border-radius: 6px; font-weight: 700; cursor: pointer;
+    font-size: 0.78rem; padding: 5px 11px;
+  }
+  .btn.primary { background: var(--gold); color: var(--navy-dark); }
+  .btn.primary:hover { background: var(--gold-light); }
+  .btn.secondary { background: transparent; border: 1px solid var(--gold-light); color: var(--gold-light); }
+  .btn.secondary:hover { background: rgba(201,162,75,0.12); }
+  .btn.danger { background: transparent; border: 1px solid var(--rust); color: var(--rust); }
+  .btn.tiny { padding: 3px 7px; font-size: 0.68rem; }
+
+  input[type="text"], input[type="date"], input[type="url"], textarea, select {
+    background: var(--navy); color: var(--white); border: 1px solid var(--navy-light);
+    border-radius: 5px; padding: 5px 8px; font-family: inherit; font-size: 0.8rem;
+  }
+
+  /* ---- Weekly M-F strip ---- */
+  .week-strip { display: flex; gap: 6px; }
+  .week-day {
+    flex: 1;
+    background: var(--navy);
+    border: 1px solid var(--navy-light);
+    border-radius: 7px;
+    padding: 6px 5px;
+    text-align: center;
+    min-height: 70px;
+  }
+  .week-day.is-today { border-color: var(--gold); background: rgba(201,162,75,0.15); }
+  .week-day .day-label { font-size: 0.72rem; font-weight: 800; color: var(--gold-light); margin-bottom: 4px; }
+  .week-day [data-day] {
+    font-size: 0.78rem; line-height: 1.3; outline: none; min-height: 34px; text-align: left;
+    word-break: break-word;
+  }
+
+  /* ---- Things coming soon (compact events) ---- */
+  .mini-event-form { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+  .mini-event-form input[type="text"] { flex: 1 1 100px; }
+  .mini-event-form input[type="date"] { flex: 0 0 120px; }
+  .mini-event-item {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--navy); border: 1px solid var(--navy-light); border-radius: 6px;
+    padding: 5px 9px; font-size: 0.78rem; margin-bottom: 5px;
+  }
+  .mini-event-item.today { border-color: var(--gold); background: rgba(201,162,75,0.15); }
+  .mini-date-badge { font-size: 0.68rem; font-weight: 700; color: var(--gold-light); white-space: nowrap; }
+  .mini-event-body { flex: 1; }
+  .mini-event-note { opacity: 0.7; font-size: 0.7rem; }
+  .mini-delete { background: none; border: none; color: var(--rust); cursor: pointer; font-size: 0.9rem; }
+
+  #birthdaysList, #eventsList { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
+  #birthdaysList .mini-event-item, #eventsList .mini-event-item { margin-bottom: 0; }
+
+  /* ---- Attendance ---- */
+  .attendance-controls { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; flex-wrap: wrap; }
+  .attendance-controls select { flex: 1 1 160px; }
+  .attendance-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 2px; border-bottom: 1px solid rgba(255,255,255,0.08); gap: 8px;
+  }
+  .attendance-name { font-size: 0.82rem; flex: 1; }
+  .attendance-summary {
+    margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--navy-light);
+  }
+  .attendance-summary-row { font-size: 0.82rem; padding: 2px 0; }
+  .attendance-summary-row strong { color: var(--gold); margin-right: 6px; }
+  .pta-group { display: flex; gap: 4px; }
+  .pta-btn {
+    width: 24px; height: 22px; border-radius: 5px; border: 1px solid var(--navy-light);
+    background: transparent; color: var(--white); font-size: 0.68rem; font-weight: 800; cursor: pointer;
+  }
+  .pta-btn.active-P { background: var(--gold); color: var(--navy-dark); border-color: var(--gold); }
+  .pta-btn.active-T { background: var(--gold-light); color: var(--navy-dark); border-color: var(--gold-light); }
+  .pta-btn.active-A { background: var(--rust); color: var(--white); border-color: var(--rust); }
+
+  .manage-classes-box { margin-top: 8px; background: rgba(0,0,0,0.2); border-radius: 7px; padding: 10px; }
+  .manage-classes-box textarea { width: 100%; min-height: 70px; resize: vertical; margin: 5px 0; }
+  .manage-classes-box input[type="text"] { width: 100%; margin-bottom: 5px; }
+  .class-list-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; padding: 3px 0; }
+
+  /* ---- Roles (bottom-left) ---- */
+  .role-mini { background: var(--navy); border: 1px solid var(--navy-light); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .role-mini-label { font-size: 0.72rem; font-weight: 800; color: var(--gold-light); text-transform: uppercase; }
+  .role-mini-name { font-size: 0.82rem; font-weight: 800; margin: 3px 0; }
+  .role-mini-buttons { display: flex; gap: 6px; margin-top: 4px; }
+  .role-edit-mini { margin-top: 8px; background: rgba(0,0,0,0.2); border-radius: 6px; padding: 8px; }
+  .role-edit-mini textarea { width: 100%; min-height: 60px; margin: 5px 0; resize: vertical; }
+  .role-edit-mini input[type="text"], .role-edit-mini input[type="number"] { width: 100%; margin-bottom: 5px; }
+
+  /* ---- Links ---- */
+  .link-form { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+  .link-form input[type="text"] { flex: 1 1 90px; }
+  .link-form input[type="url"] { flex: 1 1 120px; }
+  .link-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--navy); border: 1px solid var(--navy-light); border-radius: 6px;
+    padding: 5px 9px; margin-bottom: 5px; font-size: 0.8rem;
+  }
+  .link-item a { color: var(--gold-light); text-decoration: none; font-weight: 700; }
+  .link-item a:hover { text-decoration: underline; }
+
+  /* ---- Center panel ---- */
+  .zone-center .box { height: 100%; }
+  .center-block { margin-bottom: 10px; }
+  .center-block:last-child { margin-bottom: 0; }
+  .center-block h2 { font-size: 0.95rem; }
+  .grouping-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .grouping-controls select { flex: 1 1 150px; }
+  .grouping-controls label { font-size: 0.72rem; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .grouping-controls input[type="number"] { width: 50px; }
+  .grouping-rules {
+    background: var(--navy); border: 1px solid var(--navy-light); border-radius: 8px;
+    padding: 10px; margin-bottom: 10px;
+  }
+  .grouping-rules textarea { width: 100%; margin: 4px 0 10px; }
+  .grouping-tag-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    font-size: 0.78rem; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .grouping-tag-row .tag-checks { display: flex; gap: 10px; }
+  .grouping-tag-row label { display: flex; align-items: center; gap: 4px; font-size: 0.7rem; white-space: nowrap; }
+  .grouping-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 14px; }
+  .grouping-result-row { font-size: 0.85rem; padding: 3px 0; }
+  .grouping-result-row .table-label { font-weight: 800; color: var(--gold); margin-right: 6px; }
+  .center-editable {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--navy-light);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 1rem;
+    line-height: 1.4;
+    min-height: 40px;
+    outline: none;
+  }
+  .center-editable:empty::before {
+    content: attr(data-placeholder);
+    opacity: 0.4;
+    font-style: italic;
+  }
+  .center-editable:focus { border-color: var(--gold); }
+
+  .footer-controls {
+    max-width: 1500px; margin: 16px auto 0; display: flex; justify-content: center;
+    gap: 10px; flex-wrap: wrap; border-top: 1px dashed var(--rust); padding-top: 12px;
+  }
+  .footer-note { text-align: center; font-size: 0.68rem; opacity: 0.55; margin: 6px auto 0; max-width: 1500px; }
+</style>
+</head>
+<body>
+
+<div class="dash-title">
+  <div>
+    <h1>Chet's Classroom Dashboard</h1>
+    <button class="btn secondary tiny" id="focusModeBtn">Focus Mode</button>
+  </div>
+  <div class="header-right">
+    <div class="clock-row">
+      <div class="clock-date" id="clockDate"></div>
+      <div class="clock-time" id="clockTime"></div>
+    </div>
+    <div class="school-day" id="schoolDayCounter" style="display:none;"></div>
+    <div class="timer-widget">
+      <span class="timer-title">Timer</span>
+      <span class="timer-display" id="timerDisplay">05:00</span>
+      <input type="number" id="timerMinutesInput" min="0" max="120" value="5">
+      <span>:</span>
+      <input type="number" id="timerSecondsInput" min="0" max="59" value="0">
+      <button class="btn primary tiny" id="timerStartBtn">Start</button>
+      <button class="btn secondary tiny" id="timerPauseBtn" style="display:none;">Pause</button>
+      <button class="btn secondary tiny" id="timerResetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-grid" id="normalDashboardGrid">
+
+  <!-- LEFT COLUMN -->
+  <div class="zone-left">
+    <div class="box">
+      <h2>&#128337; Today's Schedule</h2>
+      <p class="sync-status" id="scheduleSheetNote" style="display:none; font-size:0.7rem; margin:-4px 0 8px;">From your Google Sheet (ClassTimes tab).</p>
+      <div id="todayScheduleList"></div>
+    </div>
+    <div class="box">
+      <h2>This Week</h2>
+      <p class="sync-status" id="weekPlanSheetNote" style="display:none; font-size:0.7rem; margin:-4px 0 8px;">Managed from your Google Sheet (Humanities group).</p>
+      <div class="week-strip" id="weekStrip"></div>
+    </div>
+    <div class="box">
+      <h2>Roles Today</h2>
+      <p class="sync-status" id="rolesSheetNote" style="display:none; font-size:0.7rem; margin:-4px 0 8px;">Managed from your Google Sheet.</p>
+      <select id="roleClassSelect" style="width:100%; margin-bottom:8px;">
+        <option value="Humanities 1">Humanities 1</option>
+        <option value="Humanities 2">Humanities 2</option>
+        <option value="Advisory">Advisory</option>
+      </select>
+      <div id="rolesContainer"></div>
+      <button class="btn secondary tiny" id="showAddRoleBtn" style="width:100%; margin-top:4px;">+ Add Role</button>
+      <div class="role-edit-mini" id="addRoleForm" style="display:none;">
+        <input type="text" id="newRoleLabel" placeholder="Role name">
+        <input type="number" id="newRoleGroupSize" placeholder="How many at once? (default 1)" min="1">
+        <textarea id="newRoleRoster" placeholder="Roster, one name per line"></textarea>
+        <div style="display:flex; gap:6px;">
+          <button class="btn primary tiny" id="saveNewRoleBtn">Add</button>
+          <button class="btn secondary tiny" id="cancelNewRoleBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Random Picker</h2>
+      <div class="picker-controls">
+        <select id="pickerClassSelect"></select>
+        <select id="pickerTypeSelect">
+          <option value="wheel">Spinning Wheel</option>
+          <option value="pairs">Pairs</option>
+          <option value="groups3">Groups of 3</option>
+          <option value="half">Split in Half</option>
+        </select>
+        <button class="btn secondary tiny" id="togglePickerAbsentBtn">Absent</button>
+      </div>
+      <div id="pickerAbsentPanel" class="grouping-rules" style="display:none;">
+        <div id="pickerAbsentList"></div>
+        <div style="display:flex; gap:6px; margin-top:6px;">
+          <button class="btn secondary tiny" id="closePickerAbsentBtn">Close</button>
+        </div>
+      </div>
+      <div id="pickerBody"></div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="zone-center">
+    <div class="box">
+      <div class="center-block">
+        <h2>Slides</h2>
+        <input type="text" id="slidesUrlInput" placeholder="Paste your Google Slides link here" style="width:100%; margin-bottom:8px;">
+        <div id="slidesEmbedWrap" style="display:none;">
+          <iframe id="slidesEmbedFrame" style="width:100%; aspect-ratio:16/9; border:none; border-radius:8px;" allowfullscreen></iframe>
+        </div>
+      </div>
+      <div class="center-block">
+        <h2>Seating Chart</h2>
+        <div class="grouping-controls">
+          <select id="groupingClassSelect"></select>
+          <label>Tables <input type="number" id="groupingTableCountInput" min="1" max="12" value="6"></label>
+          <button class="btn primary tiny" id="shuffleTablesBtn">Shuffle Tables</button>
+          <button class="btn secondary tiny" id="toggleGroupingRulesBtn">Edit Rules</button>
+        </div>
+        <div id="groupingRulesPanel" class="grouping-rules" style="display:none;">
+          <div id="groupingStudentTags"></div>
+          <label style="font-size:0.72rem;">Keep Apart &mdash; one pair per line (e.g. "Sam, Jamie")</label>
+          <textarea id="groupingConflictsText" rows="2" placeholder="Sam, Jamie"></textarea>
+          <label style="font-size:0.72rem;">Keep Together &mdash; one group per line (e.g. "Sam, Jamie, Alex")</label>
+          <textarea id="groupingTogetherText" rows="2" placeholder="Sam, Jamie, Alex"></textarea>
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <button class="btn primary tiny" id="saveGroupingRulesBtn">Save Rules</button>
+            <button class="btn secondary tiny" id="cancelGroupingRulesBtn">Close</button>
+          </div>
+        </div>
+        <div id="groupingResult"></div>
+      </div>
+      <div class="center-block">
+        <h2>Share Out</h2>
+        <div class="shareout-discuss">
+          <label class="shareout-discuss-label">Discuss</label>
+          <textarea class="shareout-discuss-input" rows="2" placeholder="What should they discuss?"></textarea>
+        </div>
+        <div class="shareout-grid">
+          <div class="shareout-panel">
+            <input type="text" class="shareout-label" placeholder="Class ___">
+            <div class="shareout-text" contenteditable="true" data-placeholder="Click here to jot down what comes up\u2026"></div>
+          </div>
+          <div class="shareout-panel">
+            <input type="text" class="shareout-label" placeholder="Class ___">
+            <div class="shareout-text" contenteditable="true" data-placeholder="Click here to jot down what comes up\u2026"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP RIGHT -->
+  <div class="zone-topright">
+    <div class="box">
+      <h2>Attendance</h2>
+      <p class="sync-status" id="classesSheetNote" style="display:none; font-size:0.7rem; margin:-4px 0 8px;">Roster managed from your Google Sheet (Classes tab).</p>
+      <div class="attendance-controls">
+        <select id="classSelect"></select>
+        <button class="btn secondary tiny" id="manageClassesBtn">Manage Classes</button>
+        <button class="btn secondary tiny" id="toggleAttendanceBtn">Collapse &#9650;</button>
+      </div>
+      <div class="scroll-box" id="attendanceList"></div>
+      <div class="attendance-summary" id="attendanceSummary"></div>
+      <div class="manage-classes-box" id="manageClassesBox" style="display:none;">
+        <div id="classListDisplay"></div>
+        <input type="text" id="newClassName" placeholder="Class/period name (e.g. Period 2)">
+        <textarea id="newClassRoster" placeholder="Roster, one name per line"></textarea>
+        <div style="display:flex; gap:6px;">
+          <button class="btn primary tiny" id="addClassBtn">Add Class</button>
+          <button class="btn secondary tiny" id="closeManageClassesBtn">Close</button>
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Due Soon</h2>
+      <p class="sync-status" id="dueSoonSheetNote" style="display:none; font-size:0.7rem; margin:-4px 0 8px;">From your Google Sheet (MasterCalendarImport tab).</p>
+      <div id="dueSoonList"></div>
+    </div>
+    <div class="box">
+      <h2>&#127874; Birthdays Coming Up</h2>
+      <p class="sync-status" id="birthdaysSheetNote" style="display:none; font-size:0.7rem; margin:-4px 0 8px;">Managed from your Google Sheet (Classes tab).</p>
+      <div id="birthdaysList"></div>
+      <button class="btn secondary tiny" id="showAddBirthdaysBtn" style="width:100%; margin-top:4px;">+ Add Birthdays Manually</button>
+      <div class="role-edit-mini" id="addBirthdaysForm" style="display:none;">
+        <textarea id="newBirthdaysText" placeholder="One per line: Name, MM/DD"></textarea>
+        <div style="display:flex; gap:6px;">
+          <button class="btn primary tiny" id="saveBirthdaysBtn">Save</button>
+          <button class="btn secondary tiny" id="cancelBirthdaysBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Coming Soon</h2>
+      <p class="sync-status" id="eventsSheetNote" style="display:none; font-size:0.7rem; margin:-4px 0 8px;">Managed from your Google Sheet.</p>
+      <div class="mini-event-form" id="eventForm">
+        <input type="text" id="newEventTitle" placeholder="What">
+        <input type="date" id="newEventDate">
+        <input type="text" id="newEventNote" placeholder="Note">
+        <button class="btn primary tiny" id="addEventBtn">Add</button>
+      </div>
+      <div class="events-scroll-box" id="eventsList"></div>
+    </div>
+  </div>
+  <div class="zone-bottomright">
+    <div class="box">
+      <h2>Missed Class? Catch Up Here</h2>
+      <p class="sync-status" id="handoutsSheetNote" style="display:none; font-size:0.7rem; margin:-4px 0 8px;">From your Google Sheet (Handouts tab).</p>
+      <div id="handoutsList"></div>
+    </div>
+    <div class="box">
+      <h2>This Week's Links</h2>
+      <div class="link-form">
+        <input type="text" id="weeklyLinkLabel" placeholder="Label">
+        <input type="url" id="weeklyLinkUrl" placeholder="URL">
+        <button class="btn primary tiny" id="addWeeklyLinkBtn">Add</button>
+      </div>
+      <div id="weeklyLinksList"></div>
+      <button class="btn danger tiny" id="clearWeeklyLinksBtn" style="margin-top:4px;">Clear all (new week)</button>
+    </div>
+    <div class="box">
+      <h2>Permanent Links</h2>
+      <div class="link-form">
+        <input type="text" id="permLinkLabel" placeholder="Label">
+        <input type="url" id="permLinkUrl" placeholder="URL">
+        <button class="btn primary tiny" id="addPermLinkBtn">Add</button>
+      </div>
+      <div id="permLinksList"></div>
+    </div>
+  </div>
+
+</div>
+
+<div id="focusModeGrid" style="display:none;">
+  <div id="focusSlidesCol"></div>
+  <div id="focusSideCol">
+    <div id="focusPinnedCol"></div>
+    <div id="focusDropdownCol"></div>
+  </div>
+</div>
+
+<div class="sync-panel">
+  <div class="sync-row">
+    <input type="text" id="sheetIdInput" placeholder="Paste your Google Sheet ID or full URL here">
+    <button class="btn primary" id="connectSheetBtn">Connect</button>
+    <button class="btn secondary" id="refreshSheetBtn" style="display:none;">&#8635; Refresh</button>
+    <button class="btn danger" id="disconnectSheetBtn" style="display:none;">Disconnect</button>
+  </div>
+  <div class="sync-status" id="syncStatus">Not connected \u2014 Photographer/Teacher Learner rosters and "Coming Soon" events are edited manually below.</div>
+  <details>
+    <summary>How do I connect a Google Sheet?</summary>
+    <ol>
+      <li>Make a Sheet with two tabs named exactly <code>Roles</code> and <code>Events</code>.</li>
+      <li><code>Roles</code> tab headers: <code>RoleLabel</code>, <code>StudentName</code> &mdash; one row per student, row order = rotation order.</li>
+      <li><code>Events</code> tab headers: <code>Title</code>, <code>Date</code>, <code>Note</code> &mdash; dates as <code>YYYY-MM-DD</code>, column formatted as Plain Text.</li>
+      <li>Share &rarr; General access &rarr; "Anyone with the link" &rarr; Viewer. Keep the link private since it shows student names.</li>
+      <li>Paste the Sheet's URL above and click Connect.</li>
+    </ol>
+  </details>
+</div>
+
+<div class="footer-controls">
+  <button class="btn secondary" id="backupBtn">&#11015; Backup data</button>
+  <button class="btn secondary" id="restoreBtn">&#11014; Restore from backup</button>
+  <input type="file" id="restoreFileInput" accept="application/json" style="display:none;">
+</div>
+<p class="footer-note">Everything here saves automatically in this browser. Use "Backup data" occasionally to keep a copy you can restore from on another computer.</p>
+
+<script>
+const STORAGE_KEY = 'chetDailyDashboard_v3';
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
+function todayISO(offsetDays) {
+  const d = new Date();
+  d.setDate(d.getDate() + (offsetDays || 0));
+  return d.toISOString().slice(0, 10);
+}
+
+const SCHOOL_YEAR_TOTAL_DAYS = 78;
+const DEFAULT_STATE = {
+  sheetId: null,
+  lastSynced: null,
+  masterCalendarDayNumbers: {}, // { 'YYYY-MM-DD': 'dayNumber' }, from MasterCalendarImport tab
+  dueDates: {}, // { 'YYYY-MM-DD': 'text from column H' }, from MasterCalendarImport tab
+  handouts: [], // [{ date, classKey, title, link }], from Handouts tab
+  roles: [
+    { id: 'photographer', classKey: 'Humanities 1', label: 'Photographer of the Day', roster: ['Add students \u2192'], currentIndex: 0, groupSize: 1 },
+    { id: 'learner', classKey: 'Humanities 1', label: 'Teacher Learners of the Day', roster: ['Add students \u2192'], currentIndex: 0, groupSize: 2 }
+  ],
+  activeRoleClassKey: 'Humanities 1',
+  events: [
+    { id: 'sample1', title: 'Open House', date: todayISO(7), note: '' }
+  ],
+  weekPlan: { Mon: '', Tue: '', Wed: '', Thu: '', Fri: '' },
+  classes: [],
+  attendance: {},
+  activeClassId: null,
+  attendanceCollapsed: false,
+  weeklyLinks: [],
+  permanentLinks: [],
+  slidesUrl: '',
+  groupingRules: {}, // { classId: { strongReaders: [], frontRow: [], conflicts: [[a,b]], together: [[a,b,...]] } }
+  groupingResult: {}, // { classId: { tableCount, tables: [[name,...], ...] } }
+  activeGroupingClassId: null,
+  birthdays: [], // [{ name, mmdd }]
+  classTimes: [], // [{ dayType, classKey, timeBlocks, note }]
+  minimumDays: {} // { 'YYYY-MM-DD': 'MinDay-Fri' | 'MinDay-Other' }
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    const parsed = JSON.parse(raw);
+    const merged = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)), parsed);
+    return merged;
+  } catch (e) {
+    return JSON.parse(JSON.stringify(DEFAULT_STATE));
+  }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+let state = loadState();
+let showPast = false;
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+function isSheetConnected() { return !!state.sheetId; }
+
+/* ---------- Clock ---------- */
+function renderSchoolDayCounter() {
+  const el = document.getElementById('schoolDayCounter');
+  if (!isSheetConnected()) { el.style.display = 'none'; return; }
+
+  const todayNum = state.masterCalendarDayNumbers[todayISO(0)];
+  if (todayNum) {
+    el.textContent = 'Day ' + todayNum + ' of ' + SCHOOL_YEAR_TOTAL_DAYS;
+    el.style.display = 'block';
+    return;
+  }
+
+  // No school today (holiday/weekend/break) -- look ahead for the next date
+  // that has a day number, up to 3 weeks out, rather than just hiding.
+  for (let i = 1; i <= 21; i++) {
+    const iso = todayISO(i);
+    const num = state.masterCalendarDayNumbers[iso];
+    if (num) {
+      const weekday = new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' });
+      el.textContent = 'Next: Day ' + num + ' of ' + SCHOOL_YEAR_TOTAL_DAYS + ' (' + weekday + ')';
+      el.style.display = 'block';
+      return;
+    }
+  }
+  el.style.display = 'none';
+}
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockDate').textContent = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  document.getElementById('clockTime').textContent = now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  renderSchoolDayCounter();
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+/* ---------- Countdown Timer ---------- */
+let timerRemaining = 5 * 60; // seconds
+let timerRunning = false;
+let timerInterval = null;
+let audioCtx = null;
+
+function formatTimer(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+function renderTimerDisplay() {
+  document.getElementById('timerDisplay').textContent = formatTimer(Math.max(0, timerRemaining));
+}
+function playTimerAlarm() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const beepAt = (startOffset) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 880;
+      o.connect(g); g.connect(audioCtx.destination);
+      const t0 = audioCtx.currentTime + startOffset;
+      g.gain.setValueAtTime(0.001, t0);
+      g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.35);
+      o.start(t0);
+      o.stop(t0 + 0.4);
+    };
+    beepAt(0); beepAt(0.5); beepAt(1.0);
+  } catch (e) { /* audio not available -- visual flash still happens */ }
+}
+function stopTimerInterval() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  timerRunning = false;
+}
+function timerTick() {
+  timerRemaining--;
+  renderTimerDisplay();
+  if (timerRemaining <= 0) {
+    stopTimerInterval();
+    document.getElementById('timerDisplay').classList.add('done');
+    document.getElementById('timerStartBtn').style.display = 'inline-block';
+    document.getElementById('timerPauseBtn').style.display = 'none';
+    playTimerAlarm();
+  }
+}
+document.getElementById('timerStartBtn').addEventListener('click', () => {
+  // Unlocks audio playback on this user gesture so the alarm can play later
+  // without the browser blocking it as unsolicited autoplay.
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  document.getElementById('timerDisplay').classList.remove('done');
+  if (timerRemaining <= 0) {
+    const mins = Math.max(0, parseInt(document.getElementById('timerMinutesInput').value, 10) || 0);
+    const secs = Math.max(0, Math.min(59, parseInt(document.getElementById('timerSecondsInput').value, 10) || 0));
+    timerRemaining = mins * 60 + secs;
+    if (timerRemaining <= 0) return;
+  }
+  renderTimerDisplay();
+  timerRunning = true;
+  document.getElementById('timerStartBtn').style.display = 'none';
+  document.getElementById('timerPauseBtn').style.display = 'inline-block';
+  timerInterval = setInterval(timerTick, 1000);
+});
+document.getElementById('timerPauseBtn').addEventListener('click', () => {
+  stopTimerInterval();
+  document.getElementById('timerStartBtn').style.display = 'inline-block';
+  document.getElementById('timerPauseBtn').style.display = 'none';
+});
+document.getElementById('timerResetBtn').addEventListener('click', () => {
+  stopTimerInterval();
+  document.getElementById('timerDisplay').classList.remove('done');
+  const mins = Math.max(0, parseInt(document.getElementById('timerMinutesInput').value, 10) || 0);
+  const secs = Math.max(0, Math.min(59, parseInt(document.getElementById('timerSecondsInput').value, 10) || 0));
+  timerRemaining = mins * 60 + secs;
+  document.getElementById('timerStartBtn').style.display = 'inline-block';
+  document.getElementById('timerPauseBtn').style.display = 'none';
+  renderTimerDisplay();
+});
+renderTimerDisplay();
+
+/* ---------- Week strip ---------- */
+function renderWeekStrip() {
+  const strip = document.getElementById('weekStrip');
+  const connected = isSheetConnected();
+  document.getElementById('weekPlanSheetNote').style.display = connected ? 'block' : 'none';
+  strip.innerHTML = '';
+  const jsDay = new Date().getDay(); // 0=Sun..6=Sat
+  const todayLabel = DAYS[jsDay - 1] || null; // Mon..Fri map to jsDay 1..5
+
+  DAYS.forEach(day => {
+    const cell = document.createElement('div');
+    cell.className = 'week-day' + (day === todayLabel ? ' is-today' : '');
+    const editableAttr = connected ? '' : 'contenteditable="true"';
+    cell.innerHTML = `<div class="day-label">${day}</div><div ${editableAttr} data-day="${day}"></div>`;
+    const editable = cell.querySelector('[data-day]');
+    editable.textContent = state.weekPlan[day] || '';
+    if (!connected) {
+      editable.addEventListener('blur', () => {
+        state.weekPlan[day] = editable.textContent.trim();
+        saveState();
+      });
+    }
+    strip.appendChild(cell);
+  });
+}
+
+/* ---------- Coming Soon (events) ---------- */
+function formatEventDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+function renderEvents() {
+  const connected = isSheetConnected();
+  document.getElementById('eventsSheetNote').style.display = connected ? 'block' : 'none';
+  document.getElementById('eventForm').style.display = connected ? 'none' : 'flex';
+
+  const list = document.getElementById('eventsList');
+  const todayStr = todayISO(0);
+  const twoWeeksStr = todayISO(14);
+  const sorted = [...state.events].sort((a, b) => a.date.localeCompare(b.date))
+    .filter(ev => ev.date >= todayStr && ev.date <= twoWeeksStr);
+  list.innerHTML = '';
+  if (!sorted.length) { list.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">Nothing in the next two weeks.</div>'; }
+  sorted.forEach(ev => {
+    const row = document.createElement('div');
+    row.className = 'mini-event-item' + (ev.date === todayStr ? ' today' : '');
+    row.innerHTML = `
+      <div class="mini-date-badge">${formatEventDate(ev.date)}</div>
+      <div class="mini-event-body">${escapeHtml(ev.title)}${ev.note ? '<div class="mini-event-note">' + escapeHtml(ev.note) + '</div>' : ''}</div>
+      ${connected ? '' : `<button class="mini-delete" data-id="${ev.id}">&times;</button>`}
+    `;
+    if (!connected) {
+      row.querySelector('.mini-delete').addEventListener('click', () => {
+        state.events = state.events.filter(e => e.id !== ev.id);
+        saveState(); renderEvents();
+      });
+    }
+    list.appendChild(row);
+  });
+}
+document.getElementById('addEventBtn').addEventListener('click', () => {
+  const title = document.getElementById('newEventTitle').value.trim();
+  const date = document.getElementById('newEventDate').value;
+  const note = document.getElementById('newEventNote').value.trim();
+  if (!title || !date) { alert('Add both a title and a date.'); return; }
+  state.events.push({ id: 'ev-' + Date.now(), title, date, note });
+  document.getElementById('newEventTitle').value = '';
+  document.getElementById('newEventDate').value = '';
+  document.getElementById('newEventNote').value = '';
+  saveState(); renderEvents();
+});
+
+/* ---------- Birthdays (bottom-left, 2nd box) ---------- */
+function daysUntilBirthday(mmdd) {
+  const parts = mmdd.split('/').map(Number);
+  const mm = parts[0], dd = parts[1];
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let bday = new Date(now.getFullYear(), mm - 1, dd);
+  let diff = Math.round((bday - today) / 86400000);
+  if (diff < 0) {
+    bday = new Date(now.getFullYear() + 1, mm - 1, dd);
+    diff = Math.round((bday - today) / 86400000);
+  }
+  return diff;
+}
+
+function renderBirthdays() {
+  const list = document.getElementById('birthdaysList');
+  const connected = isSheetConnected();
+  document.getElementById('birthdaysSheetNote').style.display = connected ? 'block' : 'none';
+  document.getElementById('showAddBirthdaysBtn').style.display = connected ? 'none' : 'block';
+
+  const upcoming = state.birthdays
+    .map(b => ({ name: b.name, mmdd: b.mmdd, days: daysUntilBirthday(b.mmdd) }))
+    .filter(b => b.days >= 0 && b.days <= 14)
+    .sort((a, b) => a.days - b.days);
+
+  list.innerHTML = '';
+  if (!upcoming.length) {
+    list.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">No birthdays in the next two weeks.</div>';
+    return;
+  }
+  upcoming.forEach(b => {
+    const row = document.createElement('div');
+    row.className = 'mini-event-item' + (b.days === 0 ? ' today' : '');
+    const label = b.days === 0 ? 'Today!' : (b.days === 1 ? 'Tomorrow' : b.mmdd);
+    const firstName = b.name.trim().split(/\s+/)[0];
+    row.innerHTML = `
+      <div class="mini-date-badge">${escapeHtml(label)}</div>
+      <div class="mini-event-body">${escapeHtml(firstName)}</div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('showAddBirthdaysBtn').addEventListener('click', () => {
+  document.getElementById('addBirthdaysForm').style.display = 'block';
+});
+document.getElementById('cancelBirthdaysBtn').addEventListener('click', () => {
+  document.getElementById('addBirthdaysForm').style.display = 'none';
+});
+document.getElementById('saveBirthdaysBtn').addEventListener('click', () => {
+  const raw = document.getElementById('newBirthdaysText').value;
+  const lines = raw.split('\n').map(s => s.trim()).filter(Boolean);
+  const parsed = [];
+  lines.forEach(line => {
+    const parts = line.split(',');
+    if (parts.length < 2) return;
+    const name = parts[0].trim();
+    const mmddRaw = parts[1].trim();
+    const m = mmddRaw.match(/^(\d{1,2})\/(\d{1,2})$/);
+    if (name && m) {
+      const mm = m[1].padStart(2, '0');
+      const dd = m[2].padStart(2, '0');
+      parsed.push({ name, mmdd: mm + '/' + dd });
+    }
+  });
+  if (!parsed.length) { alert('Use the format: Name, MM/DD (one per line).'); return; }
+  state.birthdays = state.birthdays.concat(parsed);
+  document.getElementById('newBirthdaysText').value = '';
+  document.getElementById('addBirthdaysForm').style.display = 'none';
+  saveState();
+  renderBirthdays();
+});
+
+/* ---------- Today's Schedule (top-left, 1st box) ---------- */
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function getTodayDayType() {
+  const now = new Date();
+  const iso = todayISO(0);
+  if (state.minimumDays && state.minimumDays[iso]) {
+    return state.minimumDays[iso]; // 'MinDay-Fri' or 'MinDay-Other'
+  }
+  const jsDay = now.getDay(); // 0=Sun..6=Sat
+  if (jsDay === 0 || jsDay === 6) return null; // weekend, no school
+  return WEEKDAY_LABELS[jsDay]; // 'Mon'..'Fri'
+}
+
+function renderTodaySchedule() {
+  const list = document.getElementById('todayScheduleList');
+  const connected = isSheetConnected();
+  document.getElementById('scheduleSheetNote').style.display = connected ? 'block' : 'none';
+
+  if (!connected || !state.classTimes.length) {
+    list.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">Connect a Google Sheet to see today\u2019s class times.</div>';
+    return;
+  }
+
+  const dayType = getTodayDayType();
+  if (!dayType) {
+    list.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">No school today.</div>';
+    return;
+  }
+
+  const todaysRows = state.classTimes.filter(ct => ct.dayType === dayType);
+  list.innerHTML = '';
+  if (!todaysRows.length) {
+    list.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">No schedule found for today (' + escapeHtml(dayType) + ').</div>';
+    return;
+  }
+  todaysRows.forEach(ct => {
+    const row = document.createElement('div');
+    row.className = 'mini-event-item';
+    row.innerHTML = `
+      <div class="mini-event-body">
+        <span style="font-weight:800; color:var(--gold); margin-right:6px;">${escapeHtml(ct.classKey)}</span>
+        ${escapeHtml(ct.timeBlocks)}
+        ${ct.note ? '<div class="mini-event-note">' + escapeHtml(ct.note) + '</div>' : ''}
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+/* ---------- Due Soon ---------- */
+function renderDueSoon() {
+  const list = document.getElementById('dueSoonList');
+  const connected = isSheetConnected();
+  document.getElementById('dueSoonSheetNote').style.display = connected ? 'block' : 'none';
+
+  if (!connected) {
+    list.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">Connect a Google Sheet to see upcoming due dates.</div>';
+    return;
+  }
+
+  const todayStr = todayISO(0);
+  const twoWeeksStr = todayISO(14);
+  const items = Object.keys(state.dueDates)
+    .filter(iso => iso >= todayStr && iso <= twoWeeksStr)
+    .sort()
+    .map(iso => ({ iso, text: state.dueDates[iso] }));
+
+  list.innerHTML = '';
+  if (!items.length) {
+    list.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">Nothing due in the next two weeks.</div>';
+    return;
+  }
+
+  items.forEach(item => {
+    const d = new Date(item.iso + 'T00:00:00');
+    const weekday = d.toLocaleDateString(undefined, { weekday: 'long' });
+    const dateLabel = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const row = document.createElement('div');
+    row.className = 'mini-event-item' + (item.iso === todayStr ? ' today' : '');
+    row.innerHTML = `
+      <div class="mini-date-badge">${escapeHtml(dateLabel)}</div>
+      <div class="mini-event-body">
+        <div style="font-weight:800; color:var(--gold-light); font-size:0.7rem;">${escapeHtml(weekday)}</div>
+        ${escapeHtml(item.text)}
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+/* ---------- Handouts (Missed Class?) ---------- */
+function renderHandouts() {
+  const list = document.getElementById('handoutsList');
+  const connected = isSheetConnected();
+  document.getElementById('handoutsSheetNote').style.display = connected ? 'block' : 'none';
+
+  if (!connected) {
+    list.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">Connect a Google Sheet to see recent handouts.</div>';
+    return;
+  }
+
+  const todayStr = todayISO(0);
+  const twoWeeksAgoStr = todayISO(-14);
+  const items = state.handouts
+    .filter(h => h.date >= twoWeeksAgoStr && h.date <= todayStr)
+    .sort((a, b) => b.date.localeCompare(a.date)); // most recent first
+
+  list.innerHTML = '';
+  if (!items.length) {
+    list.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">Nothing posted in the last two weeks.</div>';
+    return;
+  }
+
+  items.forEach(h => {
+    const d = new Date(h.date + 'T00:00:00');
+    const weekday = d.toLocaleDateString(undefined, { weekday: 'short' });
+    const dateLabel = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const row = document.createElement('div');
+    row.className = 'mini-event-item' + (h.date === todayStr ? ' today' : '');
+    row.innerHTML = `
+      <div class="mini-date-badge">${escapeHtml(weekday)} ${escapeHtml(dateLabel)}</div>
+      <div class="mini-event-body">
+        ${h.classKey ? '<span style="font-weight:800; color:var(--gold); margin-right:6px;">' + escapeHtml(h.classKey) + '</span>' : ''}
+        <a href="${escapeHtml(h.link)}" target="_blank" rel="noopener" style="color:var(--white); text-decoration:underline;">${escapeHtml(h.title)}</a>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function renderRoles() {
+  const connected = isSheetConnected();
+  document.getElementById('rolesSheetNote').style.display = connected ? 'block' : 'none';
+  document.getElementById('showAddRoleBtn').style.display = connected ? 'none' : 'block';
+
+  const roleClassSelect = document.getElementById('roleClassSelect');
+  if (roleClassSelect.value !== state.activeRoleClassKey) roleClassSelect.value = state.activeRoleClassKey || 'Humanities 1';
+
+  const container = document.getElementById('rolesContainer');
+  container.innerHTML = '';
+
+  // Only show roles for the class picked in the dropdown above (X-Block is
+  // intentionally not offered as an option here).
+  const visible = [];
+  state.roles.forEach((role, idx) => {
+    if ((role.classKey || 'Humanities 1') === (state.activeRoleClassKey || 'Humanities 1')) visible.push(idx);
+  });
+
+  if (!visible.length) {
+    container.innerHTML = '<p style="opacity:0.7; font-size:0.85rem;">No roles yet for this class.</p>';
+  }
+
+  visible.forEach(idx => {
+    const role = state.roles[idx];
+    const groupSize = role.groupSize || 1;
+    const roster = role.roster.length ? role.roster : ['\u2014'];
+    if (role.currentIndex >= roster.length) role.currentIndex = 0;
+    const names = [];
+    for (let i = 0; i < groupSize; i++) {
+      names.push(roster[(role.currentIndex + i) % roster.length]);
+    }
+
+    const card = document.createElement('div');
+    card.className = 'role-mini';
+    card.innerHTML = `
+      <div class="role-mini-label">${escapeHtml(role.label)}</div>
+      <div class="role-mini-name">${names.map(escapeHtml).join(', ')}</div>
+      <div class="role-mini-buttons">
+        <button class="btn primary tiny" data-action="next" data-idx="${idx}">Next &rarr;</button>
+        ${connected ? '' : `<button class="btn secondary tiny" data-action="edit" data-idx="${idx}">Edit</button>
+        <button class="btn danger tiny" data-action="remove" data-idx="${idx}">Remove</button>`}
+      </div>
+      ${connected ? '' : `
+      <div class="role-edit-mini" id="role-edit-${idx}" style="display:none;">
+        <input type="text" id="role-edit-label-${idx}" value="${escapeHtml(role.label)}">
+        <input type="number" id="role-edit-group-${idx}" value="${groupSize}" min="1">
+        <textarea id="role-edit-roster-${idx}">${escapeHtml(role.roster.join('\n'))}</textarea>
+        <div style="display:flex; gap:6px;">
+          <button class="btn primary tiny" data-action="save-edit" data-idx="${idx}">Save</button>
+          <button class="btn secondary tiny" data-action="cancel-edit" data-idx="${idx}">Cancel</button>
+        </div>
+      </div>`}
+    `;
+    container.appendChild(card);
+  });
+
+  container.querySelectorAll('[data-action="next"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      const role = state.roles[idx];
+      const g = role.groupSize || 1;
+      if (role.roster.length) role.currentIndex = (role.currentIndex + g) % role.roster.length;
+      saveState(); renderRoles();
+    });
+  });
+  container.querySelectorAll('[data-action="edit"]').forEach(btn => {
+    btn.addEventListener('click', () => { document.getElementById('role-edit-' + btn.dataset.idx).style.display = 'block'; });
+  });
+  container.querySelectorAll('[data-action="cancel-edit"]').forEach(btn => {
+    btn.addEventListener('click', () => { document.getElementById('role-edit-' + btn.dataset.idx).style.display = 'none'; });
+  });
+  container.querySelectorAll('[data-action="save-edit"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      const label = document.getElementById('role-edit-label-' + idx).value.trim() || state.roles[idx].label;
+      const group = parseInt(document.getElementById('role-edit-group-' + idx).value, 10) || 1;
+      const roster = document.getElementById('role-edit-roster-' + idx).value.split('\n').map(s => s.trim()).filter(Boolean);
+      state.roles[idx].label = label;
+      state.roles[idx].groupSize = group;
+      state.roles[idx].roster = roster.length ? roster : ['(no students added)'];
+      state.roles[idx].currentIndex = 0;
+      saveState(); renderRoles();
+    });
+  });
+  container.querySelectorAll('[data-action="remove"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      if (confirm('Remove "' + state.roles[idx].label + '"?')) { state.roles.splice(idx, 1); saveState(); renderRoles(); }
+    });
+  });
+}
+document.getElementById('roleClassSelect').addEventListener('change', (e) => {
+  state.activeRoleClassKey = e.target.value;
+  saveState(); renderRoles();
+});
+document.getElementById('showAddRoleBtn').addEventListener('click', () => { document.getElementById('addRoleForm').style.display = 'block'; });
+document.getElementById('cancelNewRoleBtn').addEventListener('click', () => { document.getElementById('addRoleForm').style.display = 'none'; });
+document.getElementById('saveNewRoleBtn').addEventListener('click', () => {
+  const label = document.getElementById('newRoleLabel').value.trim();
+  const group = parseInt(document.getElementById('newRoleGroupSize').value, 10) || 1;
+  const roster = document.getElementById('newRoleRoster').value.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!label) { alert('Give the role a name first.'); return; }
+  state.roles.push({ id: 'role-' + Date.now(), classKey: state.activeRoleClassKey || 'Humanities 1', label, roster: roster.length ? roster : ['(no students added)'], currentIndex: 0, groupSize: group });
+  document.getElementById('newRoleLabel').value = '';
+  document.getElementById('newRoleGroupSize').value = '';
+  document.getElementById('newRoleRoster').value = '';
+  document.getElementById('addRoleForm').style.display = 'none';
+  saveState(); renderRoles();
+});
+
+/* ---------- Attendance ---------- */
+function renderClassSelect() {
+  const sel = document.getElementById('classSelect');
+  const connected = isSheetConnected();
+  document.getElementById('classesSheetNote').style.display = connected ? 'block' : 'none';
+  document.getElementById('manageClassesBtn').style.display = connected ? 'none' : 'inline-block';
+  if (connected) document.getElementById('manageClassesBox').style.display = 'none';
+
+  sel.innerHTML = '';
+  if (!state.classes.length) {
+    sel.innerHTML = '<option value="">No classes yet \u2014 click Manage Classes</option>';
+    return;
+  }
+  state.classes.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+  if (!state.activeClassId || !state.classes.some(c => c.id === state.activeClassId)) {
+    state.activeClassId = state.classes[0].id;
+  }
+  sel.value = state.activeClassId;
+}
+document.getElementById('classSelect').addEventListener('change', (e) => {
+  state.activeClassId = e.target.value;
+  saveState();
+  renderAttendanceList();
+});
+
+function applyAttendanceCollapse() {
+  const list = document.getElementById('attendanceList');
+  const btn = document.getElementById('toggleAttendanceBtn');
+  if (state.attendanceCollapsed) {
+    list.style.display = 'none';
+    btn.textContent = 'Show Roster \u25bc';
+  } else {
+    list.style.display = '';
+    btn.textContent = 'Collapse \u25b2';
+  }
+}
+function renderAttendanceSummary(cls, marks) {
+  const el = document.getElementById('attendanceSummary');
+  if (!cls) { el.innerHTML = ''; return; }
+  const tardy = cls.students.filter(name => marks[name] === 'T');
+  const absent = cls.students.filter(name => marks[name] === 'A');
+  el.innerHTML =
+    '<div class="attendance-summary-row"><strong>T =</strong>' + (tardy.length ? escapeHtml(tardy.join(', ')) : '\u2014') + '</div>' +
+    '<div class="attendance-summary-row"><strong>A =</strong>' + (absent.length ? escapeHtml(absent.join(', ')) : '\u2014') + '</div>';
+}
+function renderAttendanceList() {
+  const list = document.getElementById('attendanceList');
+  list.innerHTML = '';
+  const cls = state.classes.find(c => c.id === state.activeClassId);
+  if (!cls) {
+    list.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">Add a class to take attendance.</div>';
+    renderAttendanceSummary(null, {});
+    applyAttendanceCollapse();
+    return;
+  }
+
+  const dateKey = todayISO(0);
+  if (!state.attendance[dateKey]) state.attendance[dateKey] = {};
+  if (!state.attendance[dateKey][cls.id]) state.attendance[dateKey][cls.id] = {};
+  const marks = state.attendance[dateKey][cls.id];
+
+  cls.students.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'attendance-row';
+    const current = marks[name] || '';
+    row.innerHTML = `
+      <div class="attendance-name">${escapeHtml(name)}</div>
+      <div class="pta-group">
+        <button class="pta-btn${current === 'T' ? ' active-T' : ''}" data-mark="T">T</button>
+        <button class="pta-btn${current === 'A' ? ' active-A' : ''}" data-mark="A">A</button>
+      </div>
+    `;
+    row.querySelectorAll('.pta-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mark = btn.dataset.mark;
+        marks[name] = (marks[name] === mark) ? '' : mark; // click again to clear
+        saveState();
+        renderAttendanceList();
+      });
+    });
+    list.appendChild(row);
+  });
+  renderAttendanceSummary(cls, marks);
+  applyAttendanceCollapse();
+}
+
+document.getElementById('toggleAttendanceBtn').addEventListener('click', () => {
+  state.attendanceCollapsed = !state.attendanceCollapsed;
+  saveState();
+  applyAttendanceCollapse();
+});
+
+document.getElementById('manageClassesBtn').addEventListener('click', () => {
+  const box = document.getElementById('manageClassesBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  renderClassListDisplay();
+});
+document.getElementById('closeManageClassesBtn').addEventListener('click', () => {
+  document.getElementById('manageClassesBox').style.display = 'none';
+});
+function renderClassListDisplay() {
+  const wrap = document.getElementById('classListDisplay');
+  wrap.innerHTML = '';
+  state.classes.forEach((c, idx) => {
+    const row = document.createElement('div');
+    row.className = 'class-list-row';
+    row.innerHTML = `<span>${escapeHtml(c.name)} (${c.students.length})</span> <button class="btn danger tiny" data-idx="${idx}">Remove</button>`;
+    row.querySelector('button').addEventListener('click', () => {
+      if (confirm('Remove class "' + c.name + '"?')) {
+        state.classes.splice(idx, 1);
+        saveState();
+        renderClassListDisplay();
+        renderClassSelect();
+        renderAttendanceList();
+      }
+    });
+    wrap.appendChild(row);
+  });
+}
+document.getElementById('addClassBtn').addEventListener('click', () => {
+  const name = document.getElementById('newClassName').value.trim();
+  const roster = document.getElementById('newClassRoster').value.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!name || !roster.length) { alert('Give the class a name and at least one student.'); return; }
+  state.classes.push({ id: 'class-' + Date.now(), name, students: roster });
+  document.getElementById('newClassName').value = '';
+  document.getElementById('newClassRoster').value = '';
+  saveState();
+  renderClassListDisplay();
+  renderClassSelect();
+  renderAttendanceList();
+});
+
+/* ---------- Links ---------- */
+function renderLinks(listId, arrKey) {
+  const wrap = document.getElementById(listId);
+  wrap.innerHTML = '';
+  state[arrKey].forEach(link => {
+    const row = document.createElement('div');
+    row.className = 'link-item';
+    row.innerHTML = `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener">${escapeHtml(link.label)}</a>
+      <button class="mini-delete" data-id="${link.id}">&times;</button>`;
+    row.querySelector('.mini-delete').addEventListener('click', () => {
+      state[arrKey] = state[arrKey].filter(l => l.id !== link.id);
+      saveState();
+      renderLinks(listId, arrKey);
+    });
+    wrap.appendChild(row);
+  });
+}
+function wireLinkForm(labelId, urlId, btnId, arrKey, listId) {
+  document.getElementById(btnId).addEventListener('click', () => {
+    const label = document.getElementById(labelId).value.trim();
+    let url = document.getElementById(urlId).value.trim();
+    if (!label || !url) { alert('Add both a label and a URL.'); return; }
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    state[arrKey].push({ id: 'link-' + Date.now(), label, url });
+    document.getElementById(labelId).value = '';
+    document.getElementById(urlId).value = '';
+    saveState();
+    renderLinks(listId, arrKey);
+  });
+}
+wireLinkForm('weeklyLinkLabel', 'weeklyLinkUrl', 'addWeeklyLinkBtn', 'weeklyLinks', 'weeklyLinksList');
+wireLinkForm('permLinkLabel', 'permLinkUrl', 'addPermLinkBtn', 'permanentLinks', 'permLinksList');
+document.getElementById('clearWeeklyLinksBtn').addEventListener('click', () => {
+  if (confirm("Clear all of this week's links?")) {
+    state.weeklyLinks = [];
+    saveState();
+    renderLinks('weeklyLinksList', 'weeklyLinks');
+  }
+});
+
+
+/* ---------- Center: Slides embed ---------- */
+function extractSlidesEmbedUrl(raw) {
+  const trimmed = (raw || '').trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(/\/presentation\/d\/([a-zA-Z0-9-_]+)/);
+  if (!match) return null;
+  return 'https://docs.google.com/presentation/d/' + match[1] + '/embed?start=false&loop=false&delayms=3000';
+}
+function renderSlidesEmbed() {
+  const wrap = document.getElementById('slidesEmbedWrap');
+  const frame = document.getElementById('slidesEmbedFrame');
+  const embedUrl = extractSlidesEmbedUrl(state.slidesUrl);
+  if (embedUrl) {
+    if (frame.src !== embedUrl) frame.src = embedUrl;
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+const slidesUrlInput = document.getElementById('slidesUrlInput');
+slidesUrlInput.value = state.slidesUrl || '';
+slidesUrlInput.addEventListener('blur', () => {
+  state.slidesUrl = slidesUrlInput.value.trim();
+  saveState();
+  renderSlidesEmbed();
+});
+renderSlidesEmbed();
+
+/* ---------- Center: Table Groups ---------- */
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function ensureGroupingRules(classId) {
+  if (!state.groupingRules[classId]) {
+    state.groupingRules[classId] = { strongReaders: [], frontRow: [], conflicts: [], together: [] };
+  }
+  return state.groupingRules[classId];
+}
+// Tries to build a valid table arrangement respecting: front-row students only
+// at tables 1 & 3 (indices 0, 2); "keep together" groups placed as a unit;
+// one strong reader spread to each table where possible; conflicts never
+// sharing a table. Retries with fresh randomness up to 300 times since this
+// is a constraint problem, not a plain shuffle -- returns null if no valid
+// arrangement is found (rules too tight for the room/roster).
+function generateTableGroups(students, rules, tableCount) {
+  const n = students.length;
+  if (!n || tableCount < 1) return null;
+  const base = Math.floor(n / tableCount);
+  const remainder = n % tableCount;
+  const baseCapacities = Array.from({ length: tableCount }, (_, i) => base + (i < remainder ? 1 : 0));
+  const frontRowTables = [0, 2].filter(i => i < tableCount);
+
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const capacities = shuffleArray(baseCapacities);
+    const tables = Array.from({ length: tableCount }, () => []);
+    const remaining = [...capacities];
+    const placed = new Set();
+    let ok = true;
+
+    const conflictsOf = (name) => rules.conflicts.filter(pair => pair.includes(name)).map(pair => pair[0] === name ? pair[1] : pair[0]);
+    const canPlace = (name, t) => {
+      if (remaining[t] <= 0) return false;
+      const conflicts = conflictsOf(name);
+      return !tables[t].some(existing => conflicts.includes(existing));
+    };
+    const place = (name, t) => { tables[t].push(name); remaining[t]--; placed.add(name); };
+
+    // 1. "Keep together" groups placed as a unit first (front-row members
+    // restrict the whole group to tables 1/3).
+    for (const group of shuffleArray(rules.together)) {
+      const validGroup = group.filter(nm => students.includes(nm) && !placed.has(nm));
+      if (!validGroup.length) continue;
+      const needsFront = validGroup.some(nm => rules.frontRow.includes(nm));
+      const allowed = shuffleArray((needsFront ? frontRowTables : Array.from({ length: tableCount }, (_, i) => i))
+        .filter(t => remaining[t] >= validGroup.length && validGroup.every(nm => canPlace(nm, t))));
+      if (!allowed.length) { ok = false; break; }
+      validGroup.forEach(nm => place(nm, allowed[0]));
+    }
+    if (!ok) continue;
+
+    // 2. Remaining front-row (vision) students, restricted to tables 1/3.
+    for (const nm of shuffleArray(rules.frontRow.filter(nm => students.includes(nm) && !placed.has(nm)))) {
+      const allowed = frontRowTables.filter(t => canPlace(nm, t));
+      if (!allowed.length) { ok = false; break; }
+      place(nm, allowed[Math.floor(Math.random() * allowed.length)]);
+    }
+    if (!ok) continue;
+
+    // 3. Strong readers, one per table where possible (round robin).
+    const tableOrder = shuffleArray(Array.from({ length: tableCount }, (_, i) => i));
+    let cursor = 0;
+    for (const nm of shuffleArray(rules.strongReaders.filter(nm => students.includes(nm) && !placed.has(nm)))) {
+      let done = false;
+      for (let tries = 0; tries < tableCount; tries++) {
+        const t = tableOrder[cursor % tableCount]; cursor++;
+        const alreadyHasOne = tables[t].some(s => rules.strongReaders.includes(s));
+        if (!alreadyHasOne && canPlace(nm, t)) { place(nm, t); done = true; break; }
+      }
+      if (!done) {
+        const allowed = Array.from({ length: tableCount }, (_, i) => i).filter(t => canPlace(nm, t));
+        if (!allowed.length) { ok = false; break; }
+        place(nm, allowed[Math.floor(Math.random() * allowed.length)]);
+      }
+    }
+    if (!ok) continue;
+
+    // 4. Everyone else, randomly, respecting conflicts + remaining capacity.
+    for (const nm of shuffleArray(students.filter(s => !placed.has(s)))) {
+      const allowed = Array.from({ length: tableCount }, (_, i) => i).filter(t => canPlace(nm, t));
+      if (!allowed.length) { ok = false; break; }
+      place(nm, allowed[Math.floor(Math.random() * allowed.length)]);
+    }
+    if (!ok) continue;
+
+    return tables;
+  }
+  return null;
+}
+function renderGroupingClassSelect() {
+  const sel = document.getElementById('groupingClassSelect');
+  sel.innerHTML = '';
+  if (!state.classes.length) {
+    sel.innerHTML = '<option value="">No classes yet</option>';
+    return;
+  }
+  state.classes.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+  if (!state.activeGroupingClassId || !state.classes.some(c => c.id === state.activeGroupingClassId)) {
+    state.activeGroupingClassId = state.classes[0].id;
+  }
+  sel.value = state.activeGroupingClassId;
+}
+function renderGroupingResult() {
+  renderGroupingClassSelect();
+  const wrap = document.getElementById('groupingResult');
+  const cls = state.classes.find(c => c.id === state.activeGroupingClassId);
+  const result = cls ? state.groupingResult[cls.id] : null;
+
+  if (!cls || !cls.students.length) {
+    wrap.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">Add students to this class to build table groups.</div>';
+    return;
+  }
+  if (!result || !result.tables || !result.tables.length) {
+    wrap.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">Click "Shuffle Tables" to generate groups.</div>';
+    return;
+  }
+
+  // Drop any names no longer on the roster, so a stale result doesn't show
+  // someone who's since been removed from the class. Display first names
+  // only to save space -- table groups are a quick reference, not a roster.
+  const rosterSet = new Set(cls.students);
+  const firstName = (full) => full.trim().split(/\s+/)[0];
+  const rows = result.tables.map((names, i) => {
+    const cleanNames = names.filter(nm => rosterSet.has(nm)).map(firstName);
+    return '<div class="grouping-result-row"><span class="table-label">Table ' + (i + 1) + ':</span>' +
+      (cleanNames.length ? escapeHtml(cleanNames.join(', ')) : '\u2014') + '</div>';
+  });
+  wrap.innerHTML = '<div class="grouping-result-grid">' + rows.join('') + '</div>';
+}
+function renderGroupingRulesPanel() {
+  const cls = state.classes.find(c => c.id === state.activeGroupingClassId);
+  const wrap = document.getElementById('groupingStudentTags');
+  if (!cls) { wrap.innerHTML = ''; return; }
+  const rules = ensureGroupingRules(cls.id);
+  wrap.innerHTML = cls.students.map(name => {
+    const id = 'tag-' + cls.id + '-' + name.replace(/\W+/g, '_');
+    return `
+      <div class="grouping-tag-row">
+        <span>${escapeHtml(name)}</span>
+        <span class="tag-checks">
+          <label><input type="checkbox" class="tag-strong" data-name="${escapeHtml(name)}" ${rules.strongReaders.includes(name) ? 'checked' : ''}> Strong reader</label>
+          <label><input type="checkbox" class="tag-front" data-name="${escapeHtml(name)}" ${rules.frontRow.includes(name) ? 'checked' : ''}> Front row</label>
+        </span>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('groupingConflictsText').value = rules.conflicts.map(pair => pair.join(', ')).join('\n');
+  document.getElementById('groupingTogetherText').value = rules.together.map(group => group.join(', ')).join('\n');
+}
+document.getElementById('groupingClassSelect').addEventListener('change', (e) => {
+  state.activeGroupingClassId = e.target.value;
+  saveState();
+  renderGroupingResult();
+  if (document.getElementById('groupingRulesPanel').style.display !== 'none') renderGroupingRulesPanel();
+});
+document.getElementById('toggleGroupingRulesBtn').addEventListener('click', () => {
+  const panel = document.getElementById('groupingRulesPanel');
+  const opening = panel.style.display === 'none';
+  panel.style.display = opening ? 'block' : 'none';
+  if (opening) renderGroupingRulesPanel();
+});
+document.getElementById('cancelGroupingRulesBtn').addEventListener('click', () => {
+  document.getElementById('groupingRulesPanel').style.display = 'none';
+});
+document.getElementById('saveGroupingRulesBtn').addEventListener('click', () => {
+  const cls = state.classes.find(c => c.id === state.activeGroupingClassId);
+  if (!cls) return;
+  const rules = ensureGroupingRules(cls.id);
+  rules.strongReaders = [...document.querySelectorAll('.tag-strong:checked')].map(el => el.dataset.name);
+  rules.frontRow = [...document.querySelectorAll('.tag-front:checked')].map(el => el.dataset.name);
+  const rosterSet = new Set(cls.students);
+  const unknown = [];
+  const parseLines = (text, minLen) => text.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+    const names = line.split(',').map(s => s.trim()).filter(Boolean);
+    names.forEach(nm => { if (!rosterSet.has(nm)) unknown.push(nm); });
+    return names;
+  }).filter(names => names.length >= minLen);
+  rules.conflicts = parseLines(document.getElementById('groupingConflictsText').value, 2);
+  rules.together = parseLines(document.getElementById('groupingTogetherText').value, 2);
+  saveState();
+  document.getElementById('groupingRulesPanel').style.display = 'none';
+  if (unknown.length) alert('Heads up \u2014 these names in Keep Apart/Keep Together don\u2019t match anyone on the roster (typo?): ' + [...new Set(unknown)].join(', '));
+});
+document.getElementById('shuffleTablesBtn').addEventListener('click', () => {
+  const cls = state.classes.find(c => c.id === state.activeGroupingClassId);
+  if (!cls || !cls.students.length) return;
+  const tableCount = Math.max(1, parseInt(document.getElementById('groupingTableCountInput').value, 10) || 6);
+  const rules = ensureGroupingRules(cls.id);
+  const tables = generateTableGroups(cls.students, rules, tableCount);
+  if (!tables) {
+    alert('Couldn\u2019t find an arrangement that satisfies all the current rules for ' + tableCount + ' tables. Try loosening a rule (fewer Keep Apart/Keep Together entries) or adjusting the table count.');
+    return;
+  }
+  state.groupingResult[cls.id] = { tableCount, tables };
+  saveState();
+  renderGroupingResult();
+});
+renderGroupingResult();
+
+/* ---------- Random Picker ---------- */
+let pickerActiveClassId = null;
+let pickerType = 'wheel';
+let wheelRotation = 0;
+let pickerAbsent = {}; // classId -> Set of names to exclude (ephemeral, resets on reload)
+
+function getExcludedSet(classId) {
+  if (!pickerAbsent[classId]) pickerAbsent[classId] = new Set();
+  return pickerAbsent[classId];
+}
+function getPickerRoster() {
+  const cls = state.classes.find(c => c.id === pickerActiveClassId);
+  if (!cls) return [];
+  const excluded = getExcludedSet(cls.id);
+  return cls.students.filter(s => !excluded.has(s));
+}
+function renderPickerAbsentPanel() {
+  const wrap = document.getElementById('pickerAbsentList');
+  const cls = state.classes.find(c => c.id === pickerActiveClassId);
+  if (!cls) { wrap.innerHTML = ''; return; }
+  const excluded = getExcludedSet(cls.id);
+  if (!cls.students.length) {
+    wrap.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">No students in this class.</div>';
+    return;
+  }
+  wrap.innerHTML = cls.students.map(name => `
+    <label class="grouping-tag-row" style="cursor:pointer;">
+      <span>${escapeHtml(name)}</span>
+      <input type="checkbox" class="picker-absent-check" data-name="${escapeHtml(name)}" ${excluded.has(name) ? 'checked' : ''}>
+    </label>
+  `).join('');
+  wrap.querySelectorAll('.picker-absent-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const set = getExcludedSet(cls.id);
+      if (cb.checked) set.add(cb.dataset.name); else set.delete(cb.dataset.name);
+      wheelRotation = 0;
+      renderPickerBody();
+    });
+  });
+}
+function renderPickerClassSelect() {
+  const sel = document.getElementById('pickerClassSelect');
+  sel.innerHTML = '';
+  if (!state.classes.length) {
+    sel.innerHTML = '<option value="">No classes yet</option>';
+    return;
+  }
+  state.classes.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+  if (!pickerActiveClassId || !state.classes.some(c => c.id === pickerActiveClassId)) {
+    pickerActiveClassId = state.classes[0].id;
+  }
+  sel.value = pickerActiveClassId;
+}
+function drawWheel(names) {
+  const canvas = document.getElementById('pickerWheelCanvas');
+  if (!canvas) return;
+  // Render at actual device-pixel resolution (not just CSS size) so text
+  // stays crisp on Retina/high-DPI displays and projectors instead of
+  // looking blurry/pixelated.
+  const displaySize = 210;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = displaySize * dpr;
+  canvas.height = displaySize * dpr;
+  canvas.style.width = displaySize + 'px';
+  canvas.style.height = displaySize + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const radius = displaySize / 2;
+  const n = names.length;
+  const colors = ['#C9A24B', '#B5563C', '#2A4A72', '#E0C687', '#8f4330', '#3a5f8f'];
+  const anglePer = (2 * Math.PI) / n;
+  ctx.clearRect(0, 0, displaySize, displaySize);
+  ctx.save();
+  ctx.translate(radius, radius);
+  for (let i = 0; i < n; i++) {
+    const start = i * anglePer;
+    const end = start + anglePer;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, radius - 3, start, end);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fill();
+    ctx.strokeStyle = '#162944';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.save();
+    ctx.rotate(start + anglePer / 2);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px Calibri, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(names[i].trim().split(/\s+/)[0], radius - 10, 4);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function spinWheel(roster) {
+  const canvas = document.getElementById('pickerWheelCanvas');
+  const resultEl = document.getElementById('wheelResult');
+  if (!canvas || canvas.dataset.spinning === '1') return;
+  canvas.dataset.spinning = '1';
+  resultEl.textContent = '';
+  const n = roster.length;
+  const anglePer = 360 / n;
+  const winnerIndex = Math.floor(Math.random() * n);
+  const winnerMid = winnerIndex * anglePer + anglePer / 2;
+  const jitter = (Math.random() - 0.5) * anglePer * 0.6;
+  // Pointer is fixed at the top, which is 270deg in this coordinate system
+  // (0deg = 3 o'clock, sweeping clockwise like canvas arcs do).
+  let delta = (270 - winnerMid - jitter) - (wheelRotation % 360);
+  delta = ((delta % 360) + 360) % 360; // always spin forward
+  wheelRotation += 5 * 360 + delta;
+  canvas.style.transform = 'rotate(' + wheelRotation + 'deg)';
+  const handler = () => {
+    canvas.removeEventListener('transitionend', handler);
+    canvas.dataset.spinning = '0';
+    resultEl.textContent = '\ud83c\udf89 ' + roster[winnerIndex];
+  };
+  canvas.addEventListener('transitionend', handler);
+}
+function generatePickerResult(roster) {
+  const shuffled = shuffleArray(roster);
+  const resultEl = document.getElementById('pickerResult');
+  let groups = [];
+  let labelPrefix = 'Group';
+  if (pickerType === 'pairs') {
+    labelPrefix = 'Pair';
+    for (let i = 0; i < shuffled.length; i += 2) groups.push(shuffled.slice(i, i + 2));
+    if (groups.length > 1 && groups[groups.length - 1].length === 1) {
+      groups[groups.length - 2].push(...groups.pop());
+    }
+  } else if (pickerType === 'groups3') {
+    for (let i = 0; i < shuffled.length; i += 3) groups.push(shuffled.slice(i, i + 3));
+    if (groups.length > 1 && groups[groups.length - 1].length < 2) {
+      groups[groups.length - 2].push(...groups.pop());
+    }
+  } else if (pickerType === 'half') {
+    const half = Math.ceil(shuffled.length / 2);
+    groups = [shuffled.slice(0, half), shuffled.slice(half)];
+    labelPrefix = 'Group';
+  }
+  resultEl.innerHTML = groups.map((g, i) =>
+    '<div class="picker-result-row"><span class="picker-label">' + labelPrefix + ' ' + (i + 1) + ':</span>' + escapeHtml(g.join(', ')) + '</div>'
+  ).join('');
+}
+function renderPickerBody() {
+  renderPickerClassSelect();
+  const body = document.getElementById('pickerBody');
+  const roster = getPickerRoster();
+
+  if (!roster.length) {
+    body.innerHTML = '<div style="opacity:0.5; font-size:0.78rem;">Add students to this class to use the picker.</div>';
+    return;
+  }
+
+  if (pickerType === 'wheel') {
+    body.innerHTML = `
+      <div class="wheel-outer">
+        <div class="wheel-pointer">&#9660;</div>
+        <canvas id="pickerWheelCanvas" width="210" height="210"></canvas>
+      </div>
+      <div style="text-align:center;">
+        <button class="btn primary tiny" id="spinWheelBtn">Spin</button>
+      </div>
+      <div class="wheel-result" id="wheelResult"></div>
+    `;
+    drawWheel(roster);
+    document.getElementById('pickerWheelCanvas').style.transform = 'rotate(' + wheelRotation + 'deg)';
+    document.getElementById('spinWheelBtn').addEventListener('click', () => spinWheel(roster));
+  } else {
+    const labels = { pairs: 'Make Pairs', groups3: 'Make Groups of 3', half: 'Split in Half' };
+    body.innerHTML = '<button class="btn primary tiny" id="generatePickerBtn">' + (labels[pickerType] || 'Generate') + '</button>' +
+      '<div id="pickerResult" style="margin-top:8px;"></div>';
+    document.getElementById('generatePickerBtn').addEventListener('click', () => generatePickerResult(roster));
+  }
+}
+document.getElementById('pickerClassSelect').addEventListener('change', (e) => {
+  pickerActiveClassId = e.target.value;
+  wheelRotation = 0;
+  renderPickerBody();
+  if (document.getElementById('pickerAbsentPanel').style.display !== 'none') renderPickerAbsentPanel();
+});
+document.getElementById('pickerTypeSelect').addEventListener('change', (e) => {
+  pickerType = e.target.value;
+  wheelRotation = 0;
+  renderPickerBody();
+});
+document.getElementById('togglePickerAbsentBtn').addEventListener('click', () => {
+  const panel = document.getElementById('pickerAbsentPanel');
+  const opening = panel.style.display === 'none';
+  panel.style.display = opening ? 'block' : 'none';
+  if (opening) renderPickerAbsentPanel();
+});
+document.getElementById('closePickerAbsentBtn').addEventListener('click', () => {
+  document.getElementById('pickerAbsentPanel').style.display = 'none';
+});
+renderPickerBody();
+
+/* ---------- Google Sheets sync (Roles + Events only) ---------- */
+function extractSheetId(input) {
+  const trimmed = input.trim();
+  const match = trimmed.match(/\/d\/([a-zA-Z0-9-_]+)/);
+  return match ? match[1] : trimmed;
+}
+function buildSheetTabUrl(sheetId, tabName) {
+  return 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(tabName) + '&_=' + Date.now();
+}
+function parseCSV(text) {
+  const rows = []; let row = []; let field = ''; let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQuotes = false; }
+      else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c === '\r') { /* skip */ }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(cell => cell.trim() !== ''));
+}
+function normalizeDate(raw) {
+  const s = (raw || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+function setSyncStatus(msg, isError) {
+  const el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.className = 'sync-status' + (isError ? ' error' : '');
+}
+async function fetchTabRows(sheetId, tabName) {
+  const resp = await fetch(buildSheetTabUrl(sheetId, tabName));
+  if (!resp.ok) throw new Error('Could not load the "' + tabName + '" tab (' + resp.status + ')');
+  const text = await resp.text();
+  if (text.trim().startsWith('<')) throw new Error('The "' + tabName + '" tab isn\u2019t accessible \u2014 check sharing is "Anyone with the link".');
+  return parseCSV(text);
+}
+async function syncFromSheet() {
+  if (!state.sheetId) return;
+  setSyncStatus('Syncing from Google Sheet\u2026', false);
+  const warnings = [];
+  let skipped = 0;
+  try {
+    let roleRows = [];
+    try { roleRows = await fetchTabRows(state.sheetId, 'Roles'); } catch (e) { warnings.push('Roles tab: ' + e.message); }
+    let eventRows = [];
+    try { eventRows = await fetchTabRows(state.sheetId, 'Events'); } catch (e) { warnings.push('Events tab: ' + e.message); }
+    let classRows = [];
+    try { classRows = await fetchTabRows(state.sheetId, 'Classes'); } catch (e) { warnings.push('Classes tab: ' + e.message); }
+    let classTimeRows = [];
+    try { classTimeRows = await fetchTabRows(state.sheetId, 'ClassTimes'); } catch (e) { warnings.push('ClassTimes tab: ' + e.message); }
+    let minimumDayRows = [];
+    try { minimumDayRows = await fetchTabRows(state.sheetId, 'MinimumDays'); } catch (e) { warnings.push('MinimumDays tab: ' + e.message); }
+    let weekPlanRows = [];
+    try { weekPlanRows = await fetchTabRows(state.sheetId, 'WeekPlan'); } catch (e) { warnings.push('WeekPlan tab: ' + e.message); }
+    let masterCalendarRows = [];
+    try { masterCalendarRows = await fetchTabRows(state.sheetId, 'MasterCalendarImport'); } catch (e) { warnings.push('MasterCalendarImport tab: ' + e.message); }
+    let handoutRows = [];
+    try { handoutRows = await fetchTabRows(state.sheetId, 'Handouts'); } catch (e) { warnings.push('Handouts tab: ' + e.message); }
+
+    // Each section below now has its own try/catch. Previously a single throw
+    // anywhere in this function skipped every render call listed after it
+    // (renderClassSelect/renderAttendanceList/renderWeekStrip are last in the
+    // list), which is what left Attendance and This Week stuck looking
+    // "disconnected" even when the sheet connection itself was fine.
+    try {
+      const roleGroups = []; const roleGroupIndex = {};
+      roleRows.slice(1).forEach(r => {
+        const classKey = (r[0] || '').trim(); const roleLabel = (r[1] || '').trim(); const name = (r[2] || '').trim();
+        if (!classKey || !roleLabel || !name) return;
+        const key = classKey + '|' + roleLabel;
+        if (!(key in roleGroupIndex)) { roleGroupIndex[key] = roleGroups.length; roleGroups.push({ classKey, roleLabel, roster: [] }); }
+        roleGroups[roleGroupIndex[key]].roster.push(name);
+      });
+      if (roleRows.length && !roleGroups.length && !warnings.some(w => w.startsWith('Roles tab'))) {
+        warnings.push('Roles tab: found the tab but no usable rows \u2014 check that column A is ClassKey, column B is RoleLabel, and column C is StudentName, with data under the header row.');
+      }
+      if (roleGroups.length) {
+        const existingByKey = {};
+        state.roles.forEach(r => { existingByKey[(r.classKey || '') + '|' + r.label] = r; });
+        state.roles = roleGroups.map(g => {
+          const existing = existingByKey[g.classKey + '|' + g.roleLabel];
+          // Default group size: Photographer of the Day shows 1 name, Teacher
+          // Learners of the Day shows 2 -- only applied the first time a role
+          // is seen, so a manual override later on isn't clobbered by re-sync.
+          const defaultGroupSize = /teacher learner/i.test(g.roleLabel) ? 2 : 1;
+          return {
+            id: existing ? existing.id : 'role-' + (g.classKey + '-' + g.roleLabel).replace(/\s+/g, '-').toLowerCase(),
+            classKey: g.classKey,
+            label: g.roleLabel,
+            roster: g.roster,
+            currentIndex: existing ? Math.min(existing.currentIndex, g.roster.length - 1) : 0,
+            groupSize: existing ? (existing.groupSize || 1) : defaultGroupSize
+          };
+        });
+      }
+    } catch (e) { warnings.push('Roles parsing: ' + e.message); }
+
+    try {
+      const newEvents = [];
+      eventRows.slice(1).forEach((r, i) => {
+        const title = (r[0] || '').trim(); const dateRaw = (r[1] || '').trim(); const note = (r[2] || '').trim();
+        if (!title || !dateRaw) return;
+        const iso = normalizeDate(dateRaw);
+        if (!iso) { skipped++; return; }
+        newEvents.push({ id: 'sheet-ev-' + i, title, date: iso, note });
+      });
+      state.events = newEvents;
+    } catch (e) { warnings.push('Events parsing: ' + e.message); }
+
+    // Birthdays come from the Classes tab's 3rd column (ClassKey, StudentName, Birthday).
+    // Same name + different birthday (e.g. two different "Diego Hernandez"es in
+    // different classes) gets disambiguated by class rather than silently merged.
+    try {
+      if (classRows.length) {
+        const seenMmdd = {}; // name -> mmdd (first one seen)
+        const collisions = new Set();
+        classRows.slice(1).forEach(r => {
+          const name = (r[1] || '').trim(); const mmdd = (r[2] || '').trim();
+          if (!name || !/^\d{2}\/\d{2}$/.test(mmdd)) return;
+          if (seenMmdd[name] && seenMmdd[name] !== mmdd) collisions.add(name);
+          if (!seenMmdd[name]) seenMmdd[name] = mmdd;
+        });
+        const seenKey = new Set();
+        const newBirthdays = [];
+        classRows.slice(1).forEach(r => {
+          const classKey = (r[0] || '').trim(); const name = (r[1] || '').trim(); const mmdd = (r[2] || '').trim();
+          if (!name || !/^\d{2}\/\d{2}$/.test(mmdd)) return;
+          const displayName = collisions.has(name) ? name + ' (' + classKey + ')' : name;
+          const key = displayName + '|' + mmdd;
+          if (seenKey.has(key)) return;
+          seenKey.add(key);
+          newBirthdays.push({ name: displayName, mmdd });
+        });
+        state.birthdays = newBirthdays;
+      }
+    } catch (e) { warnings.push('Birthdays parsing: ' + e.message); }
+
+    // Attendance rosters: also populate state.classes from the same Classes
+    // tab (ClassKey, StudentName), so the attendance dropdown doesn't require
+    // separately re-typing every roster into "Manage Classes."
+    try {
+      if (classRows.length) {
+        const classGroups = []; const classGroupIndex = {};
+        classRows.slice(1).forEach(r => {
+          const classKey = (r[0] || '').trim(); const name = (r[1] || '').trim();
+          if (!classKey || !name) return;
+          if (!(classKey in classGroupIndex)) {
+            classGroupIndex[classKey] = classGroups.length;
+            classGroups.push({ name: classKey, students: [] });
+          }
+          classGroups[classGroupIndex[classKey]].students.push(name);
+        });
+        const existingByName = {};
+        state.classes.forEach(c => { existingByName[c.name] = c; });
+        state.classes = classGroups.map(g => {
+          const existing = existingByName[g.name];
+          return {
+            id: existing ? existing.id : 'class-' + g.name.replace(/\s+/g, '-').toLowerCase(),
+            name: g.name,
+            students: g.students
+          };
+        });
+        if (!state.activeClassId || !state.classes.some(c => c.id === state.activeClassId)) {
+          state.activeClassId = state.classes.length ? state.classes[0].id : null;
+        }
+      } else if (!warnings.some(w => w.startsWith('Classes tab'))) {
+        // The Classes tab fetched fine (no fetch error above) but had zero
+        // data rows -- most likely just a header row with nothing under it.
+        warnings.push('Classes tab: found the tab but no student rows under the header.');
+      }
+    } catch (e) { warnings.push('Classes/attendance parsing: ' + e.message); }
+
+    // WeekPlan: WeekGroup, Day, Plan -- this single dashboard shows the
+    // "Humanities" group's plan (X-Block/Advisory groups also exist in the
+    // sheet, but there's only one "This Week" widget on this page right now).
+    // Matching is trimmed + case-insensitive and accepts full day names too
+    // ("Monday" as well as "Mon"), since a hand-typed sheet easily drifts
+    // from an exact-case "Mon" and used to fail completely silently.
+    try {
+      if (weekPlanRows.length) {
+        const DAY_ALIASES = {
+          mon: 'Mon', monday: 'Mon',
+          tue: 'Tue', tues: 'Tue', tuesday: 'Tue',
+          wed: 'Wed', weds: 'Wed', wednesday: 'Wed',
+          thu: 'Thu', thur: 'Thu', thurs: 'Thu', thursday: 'Thu',
+          fri: 'Fri', friday: 'Fri'
+        };
+        const newWeekPlan = { Mon: '', Tue: '', Wed: '', Thu: '', Fri: '' };
+        let sawHumanitiesRow = false;
+        const unmatchedDays = new Set();
+        weekPlanRows.slice(1).forEach(r => {
+          const group = (r[0] || '').trim();
+          const dayRaw = (r[1] || '').trim();
+          const plan = (r[2] || '').trim();
+          if (group.toLowerCase() !== 'humanities') return;
+          sawHumanitiesRow = true;
+          const dayKey = DAY_ALIASES[dayRaw.toLowerCase()];
+          if (dayKey) newWeekPlan[dayKey] = plan;
+          else if (dayRaw) unmatchedDays.add(dayRaw);
+        });
+        state.weekPlan = newWeekPlan;
+        if (!sawHumanitiesRow) {
+          warnings.push('WeekPlan tab: no rows with WeekGroup exactly "Humanities" \u2014 check that column\u2019s spelling.');
+        } else if (unmatchedDays.size) {
+          warnings.push('WeekPlan tab: couldn\u2019t match day value(s) "' + [...unmatchedDays].join('", "') + '" to Mon\u2013Fri.');
+        }
+      }
+    } catch (e) { warnings.push('WeekPlan parsing: ' + e.message); }
+
+    // ClassTimes: DayType, ClassKey, TimeBlocks, Note
+    try {
+      if (classTimeRows.length) {
+        const newClassTimes = [];
+        classTimeRows.slice(1).forEach(r => {
+          const dayType = (r[0] || '').trim();
+          const classKey = (r[1] || '').trim();
+          const timeBlocks = (r[2] || '').trim();
+          const note = (r[3] || '').trim();
+          if (!dayType || !classKey || !timeBlocks) return;
+          newClassTimes.push({ dayType, classKey, timeBlocks, note });
+        });
+        state.classTimes = newClassTimes;
+      }
+    } catch (e) { warnings.push('ClassTimes parsing: ' + e.message); }
+
+    // MinimumDays: Date, DayTypeOverride
+    try {
+      if (minimumDayRows.length) {
+        const newMinimumDays = {};
+        minimumDayRows.slice(1).forEach(r => {
+          const dateRaw = (r[0] || '').trim();
+          const override = (r[1] || '').trim();
+          const iso = normalizeDate(dateRaw);
+          if (!iso || !override) return;
+          newMinimumDays[iso] = override;
+        });
+        state.minimumDays = newMinimumDays;
+      }
+    } catch (e) { warnings.push('MinimumDays parsing: ' + e.message); }
+
+    // MasterCalendarImport: Date (A), DayNumber (B), DayOfWeek (C, unused --
+    // just for humans reading the sheet), ... DUE: Products / Deliverables (H).
+    try {
+      if (masterCalendarRows.length) {
+        const newDayNumbers = {};
+        const newDueDates = {};
+        masterCalendarRows.slice(1).forEach(r => {
+          const dateRaw = (r[0] || '').trim();
+          const dayNum = (r[1] || '').trim();
+          const dueText = (r[7] || '').trim();
+          const iso = normalizeDate(dateRaw);
+          if (!iso) return;
+          if (dayNum) newDayNumbers[iso] = dayNum;
+          if (dueText) newDueDates[iso] = dueText;
+        });
+        state.masterCalendarDayNumbers = newDayNumbers;
+        state.dueDates = newDueDates;
+      }
+    } catch (e) { warnings.push('MasterCalendarImport parsing: ' + e.message); }
+
+    // Handouts: Date, ClassKey, Title, Link -- used by the "Missed Class?"
+    // widget so absent students can find what they missed.
+    try {
+      if (handoutRows.length) {
+        const newHandouts = [];
+        handoutRows.slice(1).forEach(r => {
+          const iso = normalizeDate((r[0] || '').trim());
+          const classKey = (r[1] || '').trim();
+          const title = (r[2] || '').trim();
+          const link = (r[3] || '').trim();
+          if (!iso || !title || !/^https?:\/\//i.test(link)) return;
+          newHandouts.push({ date: iso, classKey, title, link });
+        });
+        state.handouts = newHandouts;
+      }
+    } catch (e) { warnings.push('Handouts parsing: ' + e.message); }
+
+    state.lastSynced = new Date().toISOString();
+    saveState();
+  } catch (err) {
+    warnings.push('Sync stopped early: ' + err.message);
+  } finally {
+    // Always re-render, even if something above threw or a tab was empty --
+    // otherwise boxes can get stuck showing stale "not connected yet" UI
+    // from before this sync ran, which is the bug that was reported.
+    renderRoles(); renderEvents(); renderBirthdays(); renderTodaySchedule();
+    renderClassSelect(); renderAttendanceList(); renderWeekStrip(); renderSchoolDayCounter(); renderDueSoon(); renderHandouts(); renderGroupingResult(); renderPickerClassSelect();
+  }
+
+  const t = new Date(state.lastSynced || Date.now()).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  if (skipped) warnings.push(skipped + ' event row(s) skipped, check date format.');
+  if (warnings.length) {
+    setSyncStatus('Connected \u2014 synced ' + t + ', but: ' + warnings.join(' | '), true);
+  } else {
+    setSyncStatus('Connected \u2014 last synced ' + t + '.', false);
+  }
+}
+function updateSyncButtons() {
+  const connected = isSheetConnected();
+  document.getElementById('refreshSheetBtn').style.display = connected ? 'inline-block' : 'none';
+  document.getElementById('disconnectSheetBtn').style.display = connected ? 'inline-block' : 'none';
+  document.getElementById('sheetIdInput').style.display = connected ? 'none' : 'inline-block';
+  document.getElementById('connectSheetBtn').style.display = connected ? 'none' : 'inline-block';
+}
+document.getElementById('connectSheetBtn').addEventListener('click', () => {
+  const raw = document.getElementById('sheetIdInput').value;
+  if (!raw.trim()) { alert('Paste your Google Sheet URL or ID first.'); return; }
+  state.sheetId = extractSheetId(raw);
+  saveState(); updateSyncButtons(); syncFromSheet();
+});
+document.getElementById('refreshSheetBtn').addEventListener('click', () => syncFromSheet());
+document.getElementById('disconnectSheetBtn').addEventListener('click', () => {
+  if (!confirm('Disconnect and switch back to editing Roles/Events manually?')) return;
+  state.sheetId = null; state.lastSynced = null;
+  saveState(); updateSyncButtons();
+  setSyncStatus('Not connected \u2014 editing manually below.', false);
+  renderRoles(); renderEvents();
+});
+
+/* ---------- Backup / Restore ---------- */
+document.getElementById('backupBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'classroom-dashboard-backup-' + todayISO(0) + '.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('restoreBtn').addEventListener('click', () => document.getElementById('restoreFileInput').click());
+document.getElementById('restoreFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      state = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)), parsed);
+      saveState();
+      updateSyncButtons();
+      renderAll();
+      alert('Restored successfully.');
+    } catch (err) { alert('That file could not be read as a dashboard backup.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ---------- Init ---------- */
+function renderAll() {
+  renderWeekStrip();
+  renderEvents();
+  renderRoles();
+  renderBirthdays();
+  renderTodaySchedule();
+  renderClassSelect();
+  renderAttendanceList();
+  renderLinks('weeklyLinksList', 'weeklyLinks');
+  renderLinks('permLinksList', 'permanentLinks');
+  slidesUrlInput.value = state.slidesUrl || '';
+  renderSlidesEmbed();
+  renderSchoolDayCounter();
+  renderDueSoon();
+  renderHandouts();
+  renderGroupingResult();
+  renderPickerClassSelect();
+}
+
+/* ---------- Focus Mode ---------- */
+let focusModeActive = false;
+let focusModeRecords = []; // { el, parent, next } so everything can be restored exactly
+
+function getAncestorBox(contentId, ancestorClass) {
+  const inner = document.getElementById(contentId);
+  return inner ? inner.closest(ancestorClass) : null;
+}
+function rememberAndMove(el, targetParent, wrapAsBox) {
+  if (!el) return;
+  focusModeRecords.push({ el, parent: el.parentNode, next: el.nextSibling });
+  if (wrapAsBox) {
+    const wrap = document.createElement('div');
+    wrap.className = 'box focus-slides-wrap';
+    wrap.appendChild(el);
+    targetParent.appendChild(wrap);
+  } else {
+    targetParent.appendChild(el);
+  }
+}
+function enterFocusMode() {
+  focusModeRecords = [];
+  const slidesCol = document.getElementById('focusSlidesCol');
+  const pinnedCol = document.getElementById('focusPinnedCol');
+  const dropdownCol = document.getElementById('focusDropdownCol');
+  slidesCol.innerHTML = '';
+  pinnedCol.innerHTML = '';
+  dropdownCol.innerHTML = '';
+
+  // Slides gets its own card and the whole left two-thirds.
+  rememberAndMove(getAncestorBox('slidesEmbedWrap', '.center-block'), slidesCol, true);
+
+  // Always-on essentials, pinned at the top of the right column. The clock
+  // and timer aren't in this list anymore -- they live in the persistent
+  // top bar now, so they're already visible in both modes.
+  [
+    getAncestorBox('todayScheduleList', '.box'),
+    getAncestorBox('groupingResult', '.center-block'),
+    getAncestorBox('attendanceList', '.box')
+  ].forEach(el => rememberAndMove(el, pinnedCol, false));
+
+  // Everything else collapses into one-line dropdowns, in the same order
+  // they normally appear in the full dashboard.
+  const shareOutGrid = document.querySelector('.shareout-grid');
+  [
+    { id: 'weekStrip', cls: '.box', label: 'This Week' },
+    { id: 'rolesContainer', cls: '.box', label: 'Roles Today' },
+    { id: 'pickerBody', cls: '.box', label: 'Random Picker' },
+    { id: 'dueSoonList', cls: '.box', label: 'Due Soon' },
+    { id: 'birthdaysList', cls: '.box', label: 'Birthdays Coming Up' },
+    { id: 'eventsList', cls: '.box', label: 'Coming Soon' },
+    { id: 'handoutsList', cls: '.box', label: 'Missed Class? Catch Up Here' },
+    { id: 'weeklyLinksList', cls: '.box', label: "This Week's Links" },
+    { id: 'permLinksList', cls: '.box', label: 'Permanent Links' }
+  ].forEach(d => {
+    const el = getAncestorBox(d.id, d.cls);
+    if (!el) return;
+    focusModeRecords.push({ el, parent: el.parentNode, next: el.nextSibling });
+    const details = document.createElement('details');
+    details.className = 'focus-dropdown-item';
+    const summary = document.createElement('summary');
+    summary.textContent = d.label;
+    details.appendChild(summary);
+    details.appendChild(el);
+    dropdownCol.appendChild(details);
+  });
+  if (shareOutGrid) {
+    const el = shareOutGrid.closest('.center-block');
+    if (el) {
+      focusModeRecords.push({ el, parent: el.parentNode, next: el.nextSibling });
+      const details = document.createElement('details');
+      details.className = 'focus-dropdown-item';
+      const summary = document.createElement('summary');
+      summary.textContent = 'Share Out';
+      details.appendChild(summary);
+      details.appendChild(el);
+      dropdownCol.appendChild(details);
+    }
+  }
+
+  document.getElementById('normalDashboardGrid').style.display = 'none';
+  document.getElementById('focusModeGrid').style.display = 'flex';
+  document.getElementById('focusModeBtn').textContent = 'Exit Focus Mode';
+  focusModeActive = true;
+}
+function exitFocusMode() {
+  focusModeRecords.forEach(r => { r.parent.insertBefore(r.el, r.next); });
+  focusModeRecords = [];
+  document.getElementById('focusSlidesCol').innerHTML = '';
+  document.getElementById('focusModeGrid').style.display = 'none';
+  document.getElementById('normalDashboardGrid').style.display = '';
+  document.getElementById('focusModeBtn').textContent = 'Focus Mode';
+  focusModeActive = false;
+}
+document.getElementById('focusModeBtn').addEventListener('click', () => {
+  if (focusModeActive) exitFocusMode(); else enterFocusMode();
+});
+
+updateSyncButtons();
+if (state.sheetId) {
+  document.getElementById('sheetIdInput').value = state.sheetId;
+  const lastTime = state.lastSynced ? new Date(state.lastSynced).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : null;
+  setSyncStatus(lastTime ? ('Connected \u2014 last synced ' + lastTime + '.') : 'Connected.', false);
+  syncFromSheet();
+}
+renderAll();
+</script>
+
+</body>
+</html>
