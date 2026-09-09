@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thinker Showdown</title>
+<style>
+  :root {
+    --navy: #1F3A5F;
+    --navy-dark: #162944;
+    --navy-light: #2A4A72;
+    --rust: #B5563C;
+    --rust-dark: #8f4330;
+    --gold: #C9A24B;
+    --gold-light: #E0C687;
+    --cream: #FBF7EF;
+    --white: #FFFFFF;
+    --dark-text: #222222;
+    --green: #4E9A5F;
+    --red: #C24B3F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Calibri', 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--navy-dark);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 48px;
+  }
+
+  h1 {
+    color: var(--gold);
+    font-size: 2rem;
+    letter-spacing: 0.5px;
+    margin: 0 0 4px;
+    text-align: center;
+  }
+
+  .subtitle {
+    color: var(--white);
+    font-style: italic;
+    font-size: 0.95rem;
+    opacity: 0.85;
+    margin: 0 0 24px;
+    text-align: center;
+  }
+
+  .panel {
+    width: 100%;
+    max-width: 620px;
+    background: var(--navy);
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+  }
+
+  .btn {
+    border: 2px solid var(--white);
+    background: var(--navy-dark);
+    color: var(--white);
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 14px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  .btn:hover { background: var(--navy-light); }
+  .btn.primary { background: var(--rust); border-color: var(--rust-dark); }
+  .btn.primary:hover { background: var(--rust-dark); }
+
+  #instructions p { line-height: 1.6; color: var(--gold-light); }
+
+  .hud {
+    width: 100%;
+    max-width: 620px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--gold-light);
+    margin-bottom: 8px;
+  }
+
+  .home-btn {
+    background: transparent;
+    border: 1px solid var(--gold-light);
+    color: var(--gold-light);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 16px;
+    cursor: pointer;
+  }
+  .home-btn:hover { background: rgba(201,162,75,0.12); }
+
+  .timer-track {
+    width: 100%;
+    max-width: 620px;
+    height: 8px;
+    background: var(--navy);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .timer-fill {
+    height: 100%;
+    background: var(--gold);
+    width: 100%;
+    transition: width 1s linear, background 0.3s ease;
+  }
+
+  .double-banner {
+    display: none;
+    width: 100%;
+    max-width: 620px;
+    background: var(--rust);
+    color: var(--white);
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  .double-banner.show { display: block; }
+
+  .question-box {
+    width: 100%;
+    max-width: 620px;
+    background: var(--white);
+    color: var(--dark-text);
+    border-radius: 10px;
+    padding: 28px 24px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .answers {
+    width: 100%;
+    max-width: 620px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .answer-btn {
+    background: var(--navy);
+    border: 2px solid var(--gold);
+    color: var(--white);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 18px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .answer-btn:hover:not(:disabled) { background: var(--navy-light); transform: scale(1.02); }
+  .answer-btn:disabled { cursor: default; }
+  .answer-btn.correct { background: var(--green); border-color: var(--green); }
+  .answer-btn.wrong { background: var(--red); border-color: var(--red); }
+
+  .feedback {
+    margin-top: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    min-height: 24px;
+    color: var(--gold-light);
+  }
+
+  .streak-badge {
+    display: inline-block;
+    background: var(--rust);
+    color: var(--white);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-left: 8px;
+  }
+
+  #result-screen h2 {
+    color: var(--gold);
+    font-size: 1.6rem;
+    margin: 0 0 4px;
+  }
+  .result-line {
+    font-size: 1rem;
+    color: var(--gold-light);
+    margin: 6px 0;
+  }
+  .final-score {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--gold);
+    margin: 12px 0;
+  }
+
+  .name-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+  }
+  .name-input {
+    width: 100%;
+    max-width: 280px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 2px solid var(--gold);
+    background: var(--white);
+    color: var(--dark-text);
+    font-size: 1rem;
+    text-align: center;
+  }
+  .input-error {
+    font-size: 0.8rem;
+    color: #F2A6A6;
+    min-height: 18px;
+  }
+
+  .leaderboard-wrap {
+    width: 100%;
+    max-width: 620px;
+    margin-top: 24px;
+    text-align: left;
+  }
+  .leaderboard-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .leaderboard-mode {
+    font-size: 0.75rem;
+    color: var(--gold-light);
+    opacity: 0.8;
+    text-align: center;
+    margin: -4px 0 10px;
+  }
+  .leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--navy-dark);
+    border-radius: 8px;
+    padding: 8px 14px;
+  }
+  .leaderboard-rank {
+    width: 24px;
+    font-weight: 800;
+    color: var(--gold);
+  }
+  .leaderboard-name {
+    flex: 1;
+    font-weight: 600;
+  }
+  .leaderboard-score {
+    font-weight: 800;
+    color: var(--gold);
+  }
+  .leaderboard-empty {
+    font-size: 0.85rem;
+    color: var(--gold-light);
+    text-align: center;
+    opacity: 0.8;
+  }
+
+  @media (max-width: 480px) {
+    .answers { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Thinker Showdown</h1>
+<p class="subtitle">A speed-review of Skinner, Kohn, Freire &amp; Hirsch</p>
+
+<div class="panel" id="start-screen">
+  <div id="instructions">
+    <p>You'll get 20 rapid-fire questions on Skinner, Kohn, Freire, and Hirsch. You have 12 seconds per question. Faster correct answers earn more points, and answer streaks earn bonus points.</p>
+    <p>Ready?</p>
+  </div>
+  <div class="name-row">
+    <input type="email" class="name-input" id="email-input" placeholder="Enter your email" maxlength="60">
+    <div class="input-error" id="email-error"></div>
+    <input type="text" class="name-input" id="name-input" placeholder="Enter your nickname" maxlength="20">
+    <div class="input-error" id="name-error"></div>
+  </div>
+  <button class="btn primary" id="start-btn">Start game</button>
+</div>
+
+<div class="leaderboard-wrap">
+  <div class="leaderboard-title">Class leaderboard</div>
+  <div class="leaderboard-mode" id="leaderboard-mode-start"></div>
+  <div class="leaderboard-list" id="leaderboard-start"></div>
+</div>
+
+<div id="game-screen" style="display:none; width:100%; max-width:620px; display:none; flex-direction:column; align-items:center;">
+  <div class="hud">
+    <button class="home-btn" id="home-btn-game">Home</button>
+    <span id="progress-label">Question 1 / 20</span>
+    <span id="score-label">Score: 0</span>
+  </div>
+  <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+  <div class="double-banner" id="double-banner">Double points question</div>
+  <div class="question-box" id="question-box"></div>
+  <div class="answers" id="answers"></div>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<div class="panel" id="result-screen" style="display:none;">
+  <h2>Round complete</h2>
+  <div class="final-score" id="final-score">0</div>
+  <div class="result-line" id="result-accuracy"></div>
+  <div class="result-line" id="result-streak"></div>
+  <div class="result-line" id="result-message"></div>
+  <div>
+    <button class="btn" id="home-btn-result">Home</button>
+    <button class="btn primary" id="replay-btn">Play again</button>
+  </div>
+</div>
+
+<div class="leaderboard-wrap" id="leaderboard-wrap-result" style="display:none;">
+  <div class="leaderboard-title">Class leaderboard</div>
+  <div class="leaderboard-mode" id="leaderboard-mode-result"></div>
+  <div class="leaderboard-list" id="leaderboard-result"></div>
+</div>
+
+<script>
+const QUESTIONS = [
+  { q: "According to Skinner, what does he call the imaginary, naturally curious student who needs no teacher at all?", options: ["Emile", "Rousseau", "The Natural Child", "The Ideal Learner"], correct: 0 },
+  { q: "A reason to act that comes from outside a person, like a reward, is called:", options: ["Compliance", "Extrinsic motivation", "Operant motivation", "Intrinsic motivation"], correct: 1 },
+  { q: "When a teacher's structure is removed, Skinner says a student comes under the control of this instead:", options: ["Their own values", "Their phone, their friends, whatever takes least effort", "Peer pressure", "Standardized tests"], correct: 1 },
+  { q: "Skinner says he recognizes his own thinking in this modern trend of adding points and levels to non-game activities:", options: ["Gamification", "Standardization", "Differentiation", "Personalization"], correct: 0 },
+  { q: "The concept behind Skinner's whole approach to rewards and punishments is called:", options: ["Classical conditioning", "Operant conditioning", "Cognitive dissonance", "Behavioral economics"], correct: 1 },
+  { q: "Doing something for its own sake, because you find it interesting or meaningful, is called:", options: ["Extrinsic motivation", "Compliance", "Intrinsic motivation", "Operant conditioning"], correct: 2 },
+  { q: "Kohn says what we usually call \"motivation\" in a classroom is really just this:", options: ["Curiosity", "Compliance", "Cooperation", "Conditioning"], correct: 1 },
+  { q: "According to Kohn, this happens to a person's desire to do something once a reward gets attached to it:", options: ["It grows", "It stays the same", "It shrinks", "It becomes permanent"], correct: 2 },
+  { q: "What is the title of Kohn's 1993 book about incentive programs undermining motivation?", options: ["Punished by Rewards", "The Case Against Grades", "Beyond Discipline", "No Contest"], correct: 0 },
+  { q: "Kohn says a classroom actually needs these three things instead of rewards and punishments:", options: ["Rules, routines, rewards", "Content, community, choice", "Grades, goals, grit", "Structure, safety, silence"], correct: 1 },
+  { q: "Freire's term for treating knowledge as a fixed deposit handed from teacher to student is:", options: ["Direct instruction", "The banking concept of education", "The knowledge deficit model", "Problem-posing education"], correct: 1 },
+  { q: "In every pair Freire lists (teacher talks, student listens), one person is active and one is always this:", options: ["Passive", "Curious", "Resistant", "Engaged"], correct: 0 },
+  { q: "Freire's name for his alternative to banking, where teacher and student investigate a real question together:", options: ["Inquiry pedagogy", "Co-constructed learning", "Problem-posing education", "Dialogic instruction"], correct: 2 },
+  { q: "What is the title of Freire's 1968 book?", options: ["Pedagogy of Hope", "Teaching to Transgress", "Pedagogy of the Oppressed", "Education for Critical Consciousness"], correct: 2 },
+  { q: "Freire argues a population trained to just accept what it's handed is useful to this group:", options: ["Whoever already holds power", "Teachers", "Parents", "Future employers"], correct: 0 },
+  { q: "Hirsch calls a specific, agreed-upon body of facts and skills every student is taught:", options: ["A syllabus", "A canon", "A core curriculum", "A standardized test"], correct: 2 },
+  { q: "Hirsch's term for a difference in background knowledge (not skill or intelligence) between students:", options: ["A knowledge gap", "An achievement gap", "A vocabulary deficit", "A cultural mismatch"], correct: 0 },
+  { q: "In Hirsch's passage, this sport used only words readers already knew, but still made no sense to outsiders:", options: ["Rugby", "Cricket", "Baseball", "Chess"], correct: 1 },
+  { q: "This early American idea had rich and poor children taught the same core content, together, in one classroom:", options: ["The common school", "The one-room schoolhouse", "Compulsory education", "The land-grant college"], correct: 0 },
+  { q: "Hirsch compares a shared body of knowledge to this hidden system that keeps public conversation working:", options: ["Electrical wiring", "Road infrastructure", "Plumbing", "The internet"], correct: 2 }
+];
+
+// Paste your Google Apps Script web app URL here to enable a shared,
+// cross-computer leaderboard. Leave blank to use a per-device leaderboard
+// (scores only visible on the computer that earned them).
+const CONFIG = {
+  LEADERBOARD_URL: "https://script.google.com/macros/s/AKfycbxD4FXfWeWAwY4EWv3IRXoCR57xKIj0hA-k7AFeTyjRg1GKTT59VTlAevRNXwaXl1eX9A/exec"
+};
+
+let order = [];
+let current = 0;
+let score = 0;
+let streak = 0;
+let bestStreak = 0;
+let correctCount = 0;
+let timeLeft = 12;
+let timerId = null;
+let playerName = '';
+let playerEmail = '';
+let doubleIndex = -1;
+
+const startScreen = document.getElementById('start-screen');
+const gameScreen = document.getElementById('game-screen');
+const resultScreen = document.getElementById('result-screen');
+const questionBox = document.getElementById('question-box');
+const answersEl = document.getElementById('answers');
+const feedbackEl = document.getElementById('feedback');
+const timerFill = document.getElementById('timer-fill');
+const progressLabel = document.getElementById('progress-label');
+const scoreLabel = document.getElementById('score-label');
+const doubleBanner = document.getElementById('double-banner');
+const nameInput = document.getElementById('name-input');
+const nameError = document.getElementById('name-error');
+const emailInput = document.getElementById('email-input');
+const emailError = document.getElementById('email-error');
+const leaderboardStartEl = document.getElementById('leaderboard-start');
+const leaderboardResultEl = document.getElementById('leaderboard-result');
+const leaderboardWrapResult = document.getElementById('leaderboard-wrap-result');
+
+function isRemoteMode() {
+  return CONFIG.LEADERBOARD_URL && CONFIG.LEADERBOARD_URL.trim().length > 0;
+}
+
+function getLocalLeaderboard() {
+  try {
+    return JSON.parse(localStorage.getItem('thinkerShowdownScores') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveLocalScore(name, points) {
+  const list = getLocalLeaderboard();
+  list.push({ name: name, score: points });
+  list.sort((a, b) => b.score - a.score);
+  localStorage.setItem('thinkerShowdownScores', JSON.stringify(list.slice(0, 25)));
+}
+
+function renderLeaderboard(rows) {
+  const modeLabel = isRemoteMode()
+    ? 'Live across every computer'
+    : 'This computer only \u2014 ask your teacher to enable the shared leaderboard';
+  [
+    ['leaderboard-mode-start', 'leaderboard-start'],
+    ['leaderboard-mode-result', 'leaderboard-result']
+  ].forEach(([modeId, listId]) => {
+    const modeEl = document.getElementById(modeId);
+    const listEl = document.getElementById(listId);
+    if (modeEl) modeEl.textContent = modeLabel;
+    if (!listEl) return;
+    if (!rows || rows.length === 0) {
+      listEl.innerHTML = '<div class="leaderboard-empty">No scores yet \u2014 be the first.</div>';
+      return;
+    }
+    listEl.innerHTML = rows.slice(0, 10).map((r, i) =>
+      '<div class="leaderboard-row"><span class="leaderboard-rank">' + (i + 1) + '</span>' +
+      '<span class="leaderboard-name">' + escapeHtml(r.name) + '</span>' +
+      '<span class="leaderboard-score">' + r.score + '</span></div>'
+    ).join('');
+  });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function loadLeaderboard() {
+  if (isRemoteMode()) {
+    try {
+      const res = await fetch(CONFIG.LEADERBOARD_URL);
+      const rows = await res.json();
+      renderLeaderboard(rows);
+      return;
+    } catch (e) {
+      renderLeaderboard(getLocalLeaderboard());
+      return;
+    }
+  }
+  renderLeaderboard(getLocalLeaderboard());
+}
+
+async function submitScore(name, email, points) {
+  saveLocalScore(name, points);
+  if (isRemoteMode()) {
+    try {
+      await fetch(CONFIG.LEADERBOARD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ name: name, email: email, score: points })
+      });
+    } catch (e) {
+      // Falls back silently to the local leaderboard already saved above.
+    }
+  }
+  await loadLeaderboard();
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('replay-btn').addEventListener('click', startGame);
+document.getElementById('home-btn-game').addEventListener('click', goHome);
+document.getElementById('home-btn-result').addEventListener('click', goHome);
+
+function goHome() {
+  clearInterval(timerId);
+  timerId = null;
+  gameScreen.style.display = 'none';
+  resultScreen.style.display = 'none';
+  leaderboardWrapResult.style.display = 'none';
+  startScreen.style.display = 'block';
+  nameError.textContent = '';
+  emailError.textContent = '';
+  loadLeaderboard();
+}
+
+function isValidEmail(val) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+}
+
+function startGame() {
+  const emailVal = emailInput.value.trim();
+  const nameVal = nameInput.value.trim();
+  let hasError = false;
+
+  if (!emailVal || !isValidEmail(emailVal)) {
+    emailError.textContent = 'Enter a valid email first';
+    hasError = true;
+  } else {
+    emailError.textContent = '';
+  }
+
+  if (!nameVal) {
+    nameError.textContent = 'Enter your nickname first';
+    hasError = true;
+  } else {
+    nameError.textContent = '';
+  }
+
+  if (hasError) {
+    (!emailVal || !isValidEmail(emailVal) ? emailInput : nameInput).focus();
+    return;
+  }
+
+  playerEmail = emailVal;
+  playerName = nameVal;
+
+  order = shuffle(QUESTIONS.map((_, i) => i));
+  doubleIndex = Math.floor(Math.random() * order.length);
+  current = 0;
+  score = 0;
+  streak = 0;
+  bestStreak = 0;
+  correctCount = 0;
+  startScreen.style.display = 'none';
+  resultScreen.style.display = 'none';
+  leaderboardWrapResult.style.display = 'none';
+  gameScreen.style.display = 'flex';
+  loadQuestion();
+}
+
+nameInput.addEventListener('input', () => { nameError.textContent = ''; });
+emailInput.addEventListener('input', () => { emailError.textContent = ''; });
+
+function loadQuestion() {
+  clearInterval(timerId);
+  timeLeft = 12;
+  timerFill.style.width = '100%';
+  timerFill.style.background = 'var(--gold)';
+  timerFill.style.transition = 'none';
+  requestAnimationFrame(() => {
+    timerFill.style.transition = 'width 1s linear, background 0.3s ease';
+  });
+
+  const q = QUESTIONS[order[current]];
+  progressLabel.textContent = 'Question ' + (current + 1) + ' / ' + QUESTIONS.length;
+  scoreLabel.textContent = 'Score: ' + score;
+  doubleBanner.classList.toggle('show', current === doubleIndex);
+  questionBox.textContent = q.q;
+  feedbackEl.textContent = '';
+  answersEl.innerHTML = '';
+
+  q.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'answer-btn';
+    b.textContent = opt;
+    b.addEventListener('click', () => selectAnswer(i));
+    answersEl.appendChild(b);
+  });
+
+  timerId = setInterval(() => {
+    timeLeft -= 1;
+    const pct = Math.max(0, (timeLeft / 12) * 100);
+    timerFill.style.width = pct + '%';
+    if (timeLeft <= 4) timerFill.style.background = 'var(--red)';
+    if (timeLeft <= 0) {
+      clearInterval(timerId);
+      selectAnswer(-1);
+    }
+  }, 1000);
+}
+
+function selectAnswer(choice) {
+  clearInterval(timerId);
+  const q = QUESTIONS[order[current]];
+  const buttons = answersEl.querySelectorAll('.answer-btn');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.correct) b.classList.add('correct');
+    else if (i === choice) b.classList.add('wrong');
+  });
+
+  if (choice === q.correct) {
+    streak += 1;
+    bestStreak = Math.max(bestStreak, streak);
+    correctCount += 1;
+    const timeBonus = Math.max(0, timeLeft) * 10;
+    const streakBonus = streak >= 3 ? streak * 10 : 0;
+    let gained = 100 + timeBonus + streakBonus;
+    if (current === doubleIndex) gained *= 2;
+    score += gained;
+    const doubleTag = current === doubleIndex ? ' (doubled!)' : '';
+    feedbackEl.innerHTML = 'Correct! +' + gained + doubleTag + (streak >= 3 ? '<span class="streak-badge">' + streak + ' streak</span>' : '');
+  } else {
+    streak = 0;
+    feedbackEl.textContent = choice === -1 ? "Time's up." : 'Not quite.';
+  }
+  scoreLabel.textContent = 'Score: ' + score;
+
+  setTimeout(() => {
+    current += 1;
+    if (current < QUESTIONS.length) {
+      loadQuestion();
+    } else {
+      showResults();
+    }
+  }, 1300);
+}
+
+async function showResults() {
+  gameScreen.style.display = 'none';
+  resultScreen.style.display = 'block';
+  document.getElementById('final-score').textContent = score;
+  const pct = Math.round((correctCount / QUESTIONS.length) * 100);
+  document.getElementById('result-accuracy').textContent = correctCount + ' / ' + QUESTIONS.length + ' correct (' + pct + '%)';
+  document.getElementById('result-streak').textContent = 'Best streak: ' + bestStreak;
+  let msg = 'Solid round.';
+  if (pct >= 90) msg = "You're ready for Jeopardy.";
+  else if (pct >= 70) msg = "Good ground covered \u2014 review the misses before game day.";
+  else msg = "Worth another round before Jeopardy.";
+  document.getElementById('result-message').textContent = msg;
+
+  leaderboardWrapResult.style.display = 'block';
+  await submitScore(playerName, playerEmail, score);
+}
+
+loadLeaderboard();
+</script>
+
+</body>
+</html>
