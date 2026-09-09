@@ -24,12 +24,37 @@
     padding: 14px 18px 20px;
   }
 
-  .dash-title { margin-bottom: 2px; }
+  .dash-title {
+    margin-bottom: 12px; display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; max-width: 1500px; margin-left: auto; margin-right: auto;
+  }
+  .dash-title > div:first-child { display: flex; align-items: center; gap: 12px; }
   .dash-title h1 {
     color: var(--gold);
     font-size: 1.4rem;
     margin: 0;
   }
+
+  #focusModeGrid { display: flex; gap: 16px; max-width: 1500px; margin: 0 auto; align-items: flex-start; }
+  #focusSlidesCol { flex: 2; display: flex; flex-direction: column; gap: 14px; }
+  #focusSideCol { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  #focusPinnedCol { display: flex; flex-direction: column; gap: 10px; }
+  #focusDropdownCol {
+    display: flex; flex-direction: column; gap: 6px;
+    border-top: 1px solid var(--navy-light); padding-top: 10px; margin-top: 4px;
+  }
+  .focus-dropdown-item {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--navy-light); border-radius: 8px;
+  }
+  .focus-dropdown-item summary {
+    padding: 8px 12px; cursor: pointer; font-weight: 800; color: var(--gold-light);
+    font-size: 0.82rem; letter-spacing: 0.4px; text-transform: uppercase; list-style: none;
+  }
+  .focus-dropdown-item summary::-webkit-details-marker { display: none; }
+  .focus-dropdown-item summary::before { content: '\25b8'; margin-right: 6px; display: inline-block; }
+  .focus-dropdown-item[open] summary::before { content: '\25be'; }
+  .focus-dropdown-item > *:not(summary) { padding: 0 12px 12px; }
+  .focus-slides-wrap .center-block { margin-bottom: 0; }
   .dash-title .subtitle {
     font-style: italic;
     opacity: 0.8;
@@ -140,6 +165,7 @@
 
   @media (max-width: 1050px) {
     .dashboard-grid { grid-template-columns: 1fr; grid-template-areas: "left" "topright" "center" "bottomright"; }
+    #focusModeGrid { flex-direction: column; }
   }
 
   .box {
@@ -241,10 +267,7 @@
   .role-mini { background: var(--navy); border: 1px solid var(--navy-light); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
   .role-mini-label { font-size: 0.72rem; font-weight: 800; color: var(--gold-light); text-transform: uppercase; }
   .role-mini-name { font-size: 0.82rem; font-weight: 800; margin: 3px 0; }
-  .role-mini-buttons { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
-  .role-mini-name.overridden { color: var(--gold-light); }
-  .override-mini { margin-top: 6px; }
-  .override-mini input { width: 100%; box-sizing: border-box; padding: 4px 6px; font-size: 0.8rem; border-radius: 5px; border: 1px solid var(--navy-light); }
+  .role-mini-buttons { display: flex; gap: 6px; margin-top: 4px; }
   .role-edit-mini { margin-top: 8px; background: rgba(0,0,0,0.2); border-radius: 6px; padding: 8px; }
   .role-edit-mini textarea { width: 100%; min-height: 60px; margin: 5px 0; resize: vertical; }
   .role-edit-mini input[type="text"], .role-edit-mini input[type="number"] { width: 100%; margin-bottom: 5px; }
@@ -310,13 +333,34 @@
 </head>
 <body>
 
-<div class="dashboard-grid">
+<div class="dash-title">
+  <div>
+    <h1>Chet's Classroom Dashboard</h1>
+    <button class="btn secondary tiny" id="focusModeBtn">Focus Mode</button>
+  </div>
+  <div class="header-right">
+    <div class="clock-row">
+      <div class="clock-date" id="clockDate"></div>
+      <div class="clock-time" id="clockTime"></div>
+    </div>
+    <div class="school-day" id="schoolDayCounter" style="display:none;"></div>
+    <div class="timer-widget">
+      <span class="timer-title">Timer</span>
+      <span class="timer-display" id="timerDisplay">05:00</span>
+      <input type="number" id="timerMinutesInput" min="0" max="120" value="5">
+      <span>:</span>
+      <input type="number" id="timerSecondsInput" min="0" max="59" value="0">
+      <button class="btn primary tiny" id="timerStartBtn">Start</button>
+      <button class="btn secondary tiny" id="timerPauseBtn" style="display:none;">Pause</button>
+      <button class="btn secondary tiny" id="timerResetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-grid" id="normalDashboardGrid">
 
   <!-- LEFT COLUMN -->
   <div class="zone-left">
-    <div class="dash-title">
-      <h1>Chet's Classroom Dashboard</h1>
-    </div>
     <div class="box">
       <h2>&#128337; Today's Schedule</h2>
       <p class="sync-status" id="scheduleSheetNote" style="display:none; font-size:0.7rem; margin:-4px 0 8px;">From your Google Sheet (ClassTimes tab).</p>
@@ -373,14 +417,6 @@
   <div class="zone-center">
     <div class="box">
       <div class="center-block">
-        <h2>Directions</h2>
-        <div class="center-editable" id="directionsText" contenteditable="true" data-placeholder="Click here to type today's directions\u2026"></div>
-      </div>
-      <div class="center-block">
-        <h2>What You Need to Get Done Today</h2>
-        <div class="center-editable" id="todoText" contenteditable="true" data-placeholder="Click here to type today's to-do list\u2026"></div>
-      </div>
-      <div class="center-block">
         <h2>Slides</h2>
         <input type="text" id="slidesUrlInput" placeholder="Paste your Google Slides link here" style="width:100%; margin-bottom:8px;">
         <div id="slidesEmbedWrap" style="display:none;">
@@ -430,23 +466,6 @@
 
   <!-- TOP RIGHT -->
   <div class="zone-topright">
-    <div class="header-right">
-      <div class="clock-row">
-        <div class="clock-date" id="clockDate"></div>
-        <div class="clock-time" id="clockTime"></div>
-      </div>
-      <div class="school-day" id="schoolDayCounter" style="display:none;"></div>
-      <div class="timer-widget">
-        <span class="timer-title">Timer</span>
-        <span class="timer-display" id="timerDisplay">05:00</span>
-        <input type="number" id="timerMinutesInput" min="0" max="120" value="5">
-        <span>:</span>
-        <input type="number" id="timerSecondsInput" min="0" max="59" value="0">
-        <button class="btn primary tiny" id="timerStartBtn">Start</button>
-        <button class="btn secondary tiny" id="timerPauseBtn" style="display:none;">Pause</button>
-        <button class="btn secondary tiny" id="timerResetBtn">Reset</button>
-      </div>
-    </div>
     <div class="box">
       <h2>Attendance</h2>
       <p class="sync-status" id="classesSheetNote" style="display:none; font-size:0.7rem; margin:-4px 0 8px;">Roster managed from your Google Sheet (Classes tab).</p>
@@ -526,6 +545,14 @@
 
 </div>
 
+<div id="focusModeGrid" style="display:none;">
+  <div id="focusSlidesCol"></div>
+  <div id="focusSideCol">
+    <div id="focusPinnedCol"></div>
+    <div id="focusDropdownCol"></div>
+  </div>
+</div>
+
 <div class="sync-panel">
   <div class="sync-row">
     <input type="text" id="sheetIdInput" placeholder="Paste your Google Sheet ID or full URL here">
@@ -557,12 +584,6 @@
 const STORAGE_KEY = 'chetDailyDashboard_v3';
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
-// Day-of overrides for role names (e.g. Teacher Learner of the Day). These are
-// intentionally NOT part of `state` and never saved to localStorage or the
-// sheet -- they just patch what's displayed for the rest of this browser
-// session, in case the synced/rotation name is wrong. They reset on refresh.
-let dayOverrides = {};
-
 function todayISO(offsetDays) {
   const d = new Date();
   d.setDate(d.getDate() + (offsetDays || 0));
@@ -591,8 +612,6 @@ const DEFAULT_STATE = {
   attendanceCollapsed: false,
   weeklyLinks: [],
   permanentLinks: [],
-  directionsText: '',
-  todoText: '',
   slidesUrl: '',
   groupingRules: {}, // { classId: { strongReaders: [], frontRow: [], conflicts: [[a,b]], together: [[a,b,...]] } }
   groupingResult: {}, // { classId: { tableCount, tables: [[name,...], ...] } }
@@ -1051,29 +1070,15 @@ function renderRoles() {
       names.push(roster[(role.currentIndex + i) % roster.length]);
     }
 
-    const hasOverride = Object.prototype.hasOwnProperty.call(dayOverrides, role.id);
-    const computedText = names.map(escapeHtml).join(', ');
-    const displayText = hasOverride ? escapeHtml(dayOverrides[role.id]) : computedText;
-    const overrideInputValue = escapeHtml(hasOverride ? dayOverrides[role.id] : names.join(', '));
-
     const card = document.createElement('div');
     card.className = 'role-mini';
     card.innerHTML = `
       <div class="role-mini-label">${escapeHtml(role.label)}</div>
-      <div class="role-mini-name${hasOverride ? ' overridden' : ''}">${displayText}${hasOverride ? ' <span title="Fixed for today only, not saved" style="font-weight:600; opacity:0.8;">(today only)</span>' : ''}</div>
+      <div class="role-mini-name">${names.map(escapeHtml).join(', ')}</div>
       <div class="role-mini-buttons">
         <button class="btn primary tiny" data-action="next" data-idx="${idx}">Next &rarr;</button>
-        <button class="btn secondary tiny" data-action="override" data-idx="${idx}">${hasOverride ? 'Change today\u2019s name' : 'Fix for today'}</button>
-        ${hasOverride ? `<button class="btn danger tiny" data-action="clear-override" data-idx="${idx}">Reset to synced</button>` : ''}
         ${connected ? '' : `<button class="btn secondary tiny" data-action="edit" data-idx="${idx}">Edit</button>
         <button class="btn danger tiny" data-action="remove" data-idx="${idx}">Remove</button>`}
-      </div>
-      <div class="override-mini" id="override-edit-${idx}" style="display:none;">
-        <input type="text" id="override-input-${idx}" value="${overrideInputValue}" placeholder="Type today's name(s)">
-        <div style="display:flex; gap:6px; margin-top:4px;">
-          <button class="btn primary tiny" data-action="save-override" data-idx="${idx}">Save for today</button>
-          <button class="btn secondary tiny" data-action="cancel-override" data-idx="${idx}">Cancel</button>
-        </div>
       </div>
       ${connected ? '' : `
       <div class="role-edit-mini" id="role-edit-${idx}" style="display:none;">
@@ -1096,33 +1101,6 @@ function renderRoles() {
       const g = role.groupSize || 1;
       if (role.roster.length) role.currentIndex = (role.currentIndex + g) % role.roster.length;
       saveState(); renderRoles();
-    });
-  });
-  container.querySelectorAll('[data-action="override"]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const box = document.getElementById('override-edit-' + btn.dataset.idx);
-      box.style.display = 'block';
-      const input = document.getElementById('override-input-' + btn.dataset.idx);
-      input.focus(); input.select();
-    });
-  });
-  container.querySelectorAll('[data-action="cancel-override"]').forEach(btn => {
-    btn.addEventListener('click', () => { document.getElementById('override-edit-' + btn.dataset.idx).style.display = 'none'; });
-  });
-  container.querySelectorAll('[data-action="save-override"]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.idx, 10);
-      const role = state.roles[idx];
-      const val = document.getElementById('override-input-' + idx).value.trim();
-      if (val) { dayOverrides[role.id] = val; } else { delete dayOverrides[role.id]; }
-      renderRoles(); // not saveState() -- this never persists, by design
-    });
-  });
-  container.querySelectorAll('[data-action="clear-override"]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.idx, 10);
-      delete dayOverrides[state.roles[idx].id];
-      renderRoles();
     });
   });
   container.querySelectorAll('[data-action="edit"]').forEach(btn => {
@@ -1347,13 +1325,6 @@ document.getElementById('clearWeeklyLinksBtn').addEventListener('click', () => {
   }
 });
 
-/* ---------- Center: Directions / To-Do ---------- */
-const directionsEl = document.getElementById('directionsText');
-const todoEl = document.getElementById('todoText');
-directionsEl.textContent = state.directionsText || '';
-todoEl.textContent = state.todoText || '';
-directionsEl.addEventListener('blur', () => { state.directionsText = directionsEl.textContent; saveState(); });
-todoEl.addEventListener('blur', () => { state.todoText = todoEl.textContent; saveState(); });
 
 /* ---------- Center: Slides embed ---------- */
 function extractSlidesEmbedUrl(raw) {
@@ -2162,8 +2133,6 @@ function renderAll() {
   renderAttendanceList();
   renderLinks('weeklyLinksList', 'weeklyLinks');
   renderLinks('permLinksList', 'permanentLinks');
-  directionsEl.textContent = state.directionsText || '';
-  todoEl.textContent = state.todoText || '';
   slidesUrlInput.value = state.slidesUrl || '';
   renderSlidesEmbed();
   renderSchoolDayCounter();
@@ -2172,6 +2141,104 @@ function renderAll() {
   renderGroupingResult();
   renderPickerClassSelect();
 }
+
+/* ---------- Focus Mode ---------- */
+let focusModeActive = false;
+let focusModeRecords = []; // { el, parent, next } so everything can be restored exactly
+
+function getAncestorBox(contentId, ancestorClass) {
+  const inner = document.getElementById(contentId);
+  return inner ? inner.closest(ancestorClass) : null;
+}
+function rememberAndMove(el, targetParent, wrapAsBox) {
+  if (!el) return;
+  focusModeRecords.push({ el, parent: el.parentNode, next: el.nextSibling });
+  if (wrapAsBox) {
+    const wrap = document.createElement('div');
+    wrap.className = 'box focus-slides-wrap';
+    wrap.appendChild(el);
+    targetParent.appendChild(wrap);
+  } else {
+    targetParent.appendChild(el);
+  }
+}
+function enterFocusMode() {
+  focusModeRecords = [];
+  const slidesCol = document.getElementById('focusSlidesCol');
+  const pinnedCol = document.getElementById('focusPinnedCol');
+  const dropdownCol = document.getElementById('focusDropdownCol');
+  slidesCol.innerHTML = '';
+  pinnedCol.innerHTML = '';
+  dropdownCol.innerHTML = '';
+
+  // Slides gets its own card and the whole left two-thirds.
+  rememberAndMove(getAncestorBox('slidesEmbedWrap', '.center-block'), slidesCol, true);
+
+  // Always-on essentials, pinned at the top of the right column. The clock
+  // and timer aren't in this list anymore -- they live in the persistent
+  // top bar now, so they're already visible in both modes.
+  [
+    getAncestorBox('todayScheduleList', '.box'),
+    getAncestorBox('groupingResult', '.center-block'),
+    getAncestorBox('attendanceList', '.box')
+  ].forEach(el => rememberAndMove(el, pinnedCol, false));
+
+  // Everything else collapses into one-line dropdowns, in the same order
+  // they normally appear in the full dashboard.
+  const shareOutGrid = document.querySelector('.shareout-grid');
+  [
+    { id: 'weekStrip', cls: '.box', label: 'This Week' },
+    { id: 'rolesContainer', cls: '.box', label: 'Roles Today' },
+    { id: 'pickerBody', cls: '.box', label: 'Random Picker' },
+    { id: 'dueSoonList', cls: '.box', label: 'Due Soon' },
+    { id: 'birthdaysList', cls: '.box', label: 'Birthdays Coming Up' },
+    { id: 'eventsList', cls: '.box', label: 'Coming Soon' },
+    { id: 'handoutsList', cls: '.box', label: 'Missed Class? Catch Up Here' },
+    { id: 'weeklyLinksList', cls: '.box', label: "This Week's Links" },
+    { id: 'permLinksList', cls: '.box', label: 'Permanent Links' }
+  ].forEach(d => {
+    const el = getAncestorBox(d.id, d.cls);
+    if (!el) return;
+    focusModeRecords.push({ el, parent: el.parentNode, next: el.nextSibling });
+    const details = document.createElement('details');
+    details.className = 'focus-dropdown-item';
+    const summary = document.createElement('summary');
+    summary.textContent = d.label;
+    details.appendChild(summary);
+    details.appendChild(el);
+    dropdownCol.appendChild(details);
+  });
+  if (shareOutGrid) {
+    const el = shareOutGrid.closest('.center-block');
+    if (el) {
+      focusModeRecords.push({ el, parent: el.parentNode, next: el.nextSibling });
+      const details = document.createElement('details');
+      details.className = 'focus-dropdown-item';
+      const summary = document.createElement('summary');
+      summary.textContent = 'Share Out';
+      details.appendChild(summary);
+      details.appendChild(el);
+      dropdownCol.appendChild(details);
+    }
+  }
+
+  document.getElementById('normalDashboardGrid').style.display = 'none';
+  document.getElementById('focusModeGrid').style.display = 'flex';
+  document.getElementById('focusModeBtn').textContent = 'Exit Focus Mode';
+  focusModeActive = true;
+}
+function exitFocusMode() {
+  focusModeRecords.forEach(r => { r.parent.insertBefore(r.el, r.next); });
+  focusModeRecords = [];
+  document.getElementById('focusSlidesCol').innerHTML = '';
+  document.getElementById('focusModeGrid').style.display = 'none';
+  document.getElementById('normalDashboardGrid').style.display = '';
+  document.getElementById('focusModeBtn').textContent = 'Focus Mode';
+  focusModeActive = false;
+}
+document.getElementById('focusModeBtn').addEventListener('click', () => {
+  if (focusModeActive) exitFocusMode(); else enterFocusMode();
+});
 
 updateSyncButtons();
 if (state.sheetId) {
