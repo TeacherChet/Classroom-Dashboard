@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Humanities Class Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #EFE9DA;
+    --ink: #201D18;
+    --white: #FFFFFF;
+    --line: rgba(32,29,24,0.18);
+    --rust: #A73422;
+    --navy: #2F5F72;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+    background: var(--cream);
+    color: var(--ink);
+    padding: 18px 20px 24px;
+  }
+
+  .dash-title {
+    margin-bottom: 18px; display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; max-width: 1200px; margin-left: auto; margin-right: auto;
+    background: var(--white);
+    border: 1.5px solid var(--ink);
+    padding: 16px 22px;
+  }
+  .dash-title > div:first-child { display: flex; flex-direction: column; gap: 6px; }
+  .eyebrow {
+    color: var(--rust);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    font-size: 0.68rem;
+  }
+  .dash-title h1 {
+    color: var(--ink);
+    font-family: 'Newsreader', Georgia, serif;
+    font-weight: 500;
+    font-size: 2rem;
+    letter-spacing: -0.3px;
+    margin: 0;
+    line-height: 1.05;
+  }
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .clock-row { display: flex; align-items: baseline; gap: 12px; }
+  .clock-date { font-size: 1.1rem; font-weight: 600; color: var(--ink); }
+  .clock-time { font-size: 1rem; color: var(--rust); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .school-day { font-size: 0.85rem; color: var(--navy); opacity: 0.9; font-weight: 600; }
+
+  .box {
+    background: var(--card-bg);
+    color: var(--card-text);
+    border: none;
+    border-radius: 0;
+    padding: 18px 20px;
+  }
+  .box h2 {
+    margin: 0 0 14px;
+    color: var(--card-text);
+    font-family: 'Newsreader', Georgia, serif;
+    font-weight: 500;
+    font-size: 1.3rem;
+    padding-bottom: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--card-text) 32%, transparent);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .swatch-plum { --card-bg: #4B3F63; --card-text: #F1ECDD; }
+  .swatch-mustard { --card-bg: #C9A24B; --card-text: #241C12; }
+  .swatch-brick { --card-bg: #A73422; --card-text: #F6EADF; }
+  .swatch-forest { --card-bg: #2B3B24; --card-text: #EDE7D6; }
+  .swatch-blush { --card-bg: #D8C2B8; --card-text: #2B211C; }
+  .swatch-dustyblue { --card-bg: #4F7996; --card-text: #EAF2F6; }
+  .swatch-orange { --card-bg: #D98B45; --card-text: #2B1B0C; }
+  .swatch-mauve { --card-bg: #6E5468; --card-text: #F4ECEF; }
+  .swatch-steel { --card-bg: #2F5F72; --card-text: #E8F0F2; }
+
+  .btn {
+    border: 1px solid var(--card-text, var(--ink));
+    background: transparent;
+    color: var(--card-text, var(--ink));
+    border-radius: 3px;
+    font-family: 'Newsreader', Georgia, serif;
+    font-weight: 500;
+    font-size: 0.76rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn:hover { background: color-mix(in srgb, var(--card-text, var(--ink)) 14%, transparent); }
+  .btn.primary { background: var(--card-text, var(--ink)); color: var(--card-bg, var(--white)); }
+  .btn.primary:hover { background: color-mix(in srgb, var(--card-text, var(--ink)) 82%, var(--card-bg, white) 18%); }
+
+  select {
+    background: var(--white); color: var(--ink); border: 1px solid var(--ink);
+    border-radius: 3px; padding: 5px 8px; font-family: 'Newsreader', Georgia, serif; font-size: 0.8rem;
+  }
+
+  /* ---- Weekly M-F strip ---- */
+  .week-strip { display: flex; gap: 6px; }
+  .week-day {
+    flex: 1;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--card-text) 35%, transparent);
+    padding: 6px 5px;
+    text-align: center;
+    min-height: 70px;
+  }
+  .week-day.is-today { border-color: var(--card-text); background: color-mix(in srgb, var(--card-text) 12%, transparent); }
+  .week-day .day-label { font-size: 0.7rem; font-weight: 600; color: var(--card-text); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .week-day .day-plan { font-size: 0.78rem; line-height: 1.3; text-align: left; word-break: break-word; color: var(--card-text); }
+
+  /* ---- Compact list rows (events / due dates / handouts / birthdays) ---- */
+  .mini-event-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; border-bottom: 1px solid color-mix(in srgb, var(--card-text) 25%, transparent);
+    font-size: 0.82rem; color: var(--card-text);
+  }
+  .mini-event-item.today { border-bottom: 2px solid var(--card-text); }
+  .mini-date-badge { font-size: 0.7rem; font-weight: 700; color: var(--card-text); white-space: nowrap; }
+  .mini-event-body { flex: 1; color: var(--card-text); }
+  .mini-event-note { opacity: 0.68; font-size: 0.72rem; }
+  .empty-note { opacity: 0.55; font-size: 0.8rem; font-style: italic; }
+
+  /* ---- Roles / rotation ---- */
+  .role-block { margin-bottom: 14px; }
+  .role-block:last-child { margin-bottom: 0; }
+  .role-label { font-size: 0.72rem; font-weight: 600; color: var(--card-text); text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; margin-bottom: 6px; }
+  .role-roster { font-size: 0.85rem; line-height: 1.6; color: var(--card-text); }
+  .role-roster .name { padding: 1px 6px; border: 1px solid color-mix(in srgb, var(--card-text) 40%, transparent); border-radius: 3px; margin: 0 4px 4px 0; display: inline-block; }
+
+  /* ---- Grades card ---- */
+  .grades-card p { font-size: 0.9rem; line-height: 1.5; margin: 0 0 14px; }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    .dashboard-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 620px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
+  }
+
+  .sync-note { text-align: center; font-size: 0.68rem; color: var(--ink); opacity: 0.55; margin: 16px auto 0; max-width: 1200px; }
+</style>
+</head>
+<body>
+
+<div class="dash-title">
+  <div>
+    <div class="eyebrow">HTH &middot; Humanities &middot; Fall 2026</div>
+    <h1>Your Class Dashboard</h1>
+  </div>
+  <div class="header-right">
+    <div class="clock-row">
+      <div class="clock-date" id="clockDate"></div>
+      <div class="clock-time" id="clockTime"></div>
+    </div>
+    <div class="school-day" id="schoolDayCounter" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+
+  <div class="box swatch-plum">
+    <h2>&#128337; Today's Schedule</h2>
+    <div id="todayScheduleList"></div>
+  </div>
+
+  <div class="box swatch-steel">
+    <h2>Due Soon</h2>
+    <div id="dueSoonList"></div>
+  </div>
+
+  <div class="box swatch-dustyblue">
+    <h2>Missed Class? Catch Up Here</h2>
+    <div id="handoutsList"></div>
+  </div>
+
+  <div class="box swatch-mustard">
+    <h2>This Week</h2>
+    <div class="week-strip" id="weekStrip"></div>
+  </div>
+
+  <div class="box swatch-blush grades-card">
+    <h2>Grades &amp; Attendance</h2>
+    <p>Your grades and attendance live in PowerSchool, not here. Check the real thing:</p>
+    <a class="btn primary" href="https://hightechhigh.powerschool.com/public/" target="_blank" rel="noopener">Open PowerSchool &rarr;</a>
+  </div>
+
+  <div class="box swatch-orange">
+    <h2>Coming Soon</h2>
+    <div id="eventsList"></div>
+  </div>
+
+  <div class="box swatch-brick">
+    <h2>Roles &amp; Rotations
+      <select id="roleClassSelect" style="width:auto; font-size:0.72rem;">
+        <option value="Calm">Calm</option>
+        <option value="Demure">Demure</option>
+        <option value="Advisory">Advisory</option>
+      </select>
+    </h2>
+    <div id="rolesContainer"></div>
+    <p class="empty-note" style="margin-top:10px;">Ask Mr. Chet who's up today &mdash; this shows the rotation order, not today's pick.</p>
+  </div>
+
+  <div class="box swatch-mauve">
+    <h2>Birthdays Coming Up</h2>
+    <div id="birthdaysList"></div>
+  </div>
+
+</div>
+
+<p class="sync-note" id="syncNote">Loading&hellip;</p>
+
+<script>
+const SHEET_ID = '1dhVJ9FaBtUTcA5LOnfi29qOp4p1PCw0iI7fs3fQXu_A';
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const SCHOOL_YEAR_TOTAL_DAYS = 78;
+const REFRESH_MS = 5 * 60 * 1000;
+
+let sheetData = {
+  masterCalendarDayNumbers: {},
+  dueDates: {},
+  handouts: [],
+  events: [],
+  weekPlan: { Mon: '', Tue: '', Wed: '', Thu: '', Fri: '' },
+  birthdays: [],
+  classTimes: [],
+  minimumDays: {},
+  roleRosters: {} // { 'ClassKey|RoleLabel': [names...] }
+};
+let activeRoleClassKey = 'Calm';
+
+function todayISO(offsetDays) {
+  const d = new Date();
+  d.setDate(d.getDate() + (offsetDays || 0));
+  return d.toISOString().slice(0, 10);
+}
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+function normalizeDate(raw) {
+  const s = (raw || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+
+/* ---------- Clock ---------- */
+function tickClock() {
+  const now = new Date();
+  document.getElementById('clockDate').textContent = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  document.getElementById('clockTime').textContent = now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+tickClock();
+setInterval(tickClock, 15000);
+
+function renderSchoolDayCounter() {
+  const el = document.getElementById('schoolDayCounter');
+  const todayNum = sheetData.masterCalendarDayNumbers[todayISO(0)];
+  if (todayNum) {
+    el.textContent = 'Day ' + todayNum + ' of ' + SCHOOL_YEAR_TOTAL_DAYS;
+    el.style.display = 'block';
+    return;
+  }
+  for (let i = 1; i <= 21; i++) {
+    const num = sheetData.masterCalendarDayNumbers[todayISO(i)];
+    if (num) {
+      el.textContent = 'Next: Day ' + num + ' of ' + SCHOOL_YEAR_TOTAL_DAYS;
+      el.style.display = 'block';
+      return;
+    }
+  }
+  el.style.display = 'none';
+}
+
+/* ---------- Today's Schedule ---------- */
+function getTodayDayType() {
+  const iso = todayISO(0);
+  if (sheetData.minimumDays && sheetData.minimumDays[iso]) return sheetData.minimumDays[iso];
+  const jsDay = new Date().getDay();
+  if (jsDay === 0 || jsDay === 6) return null;
+  return WEEKDAY_LABELS[jsDay];
+}
+function renderTodaySchedule() {
+  const list = document.getElementById('todayScheduleList');
+  if (!sheetData.classTimes.length) {
+    list.innerHTML = '<div class="empty-note">No schedule data yet.</div>';
+    return;
+  }
+  const dayType = getTodayDayType();
+  if (!dayType) { list.innerHTML = '<div class="empty-note">No school today.</div>'; return; }
+  const rows = sheetData.classTimes.filter(ct => ct.dayType === dayType);
+  if (!rows.length) { list.innerHTML = '<div class="empty-note">No schedule found for today (' + escapeHtml(dayType) + ').</div>'; return; }
+  list.innerHTML = rows.map(ct => `
+    <div class="mini-event-item">
+      <div class="mini-event-body">
+        <span style="font-weight:700; margin-right:6px;">${escapeHtml(ct.classKey)}</span>
+        ${escapeHtml(ct.timeBlocks)}
+        ${ct.note ? '<div class="mini-event-note">' + escapeHtml(ct.note) + '</div>' : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ---------- This Week ---------- */
+function renderWeekStrip() {
+  const strip = document.getElementById('weekStrip');
+  const jsDay = new Date().getDay();
+  const todayLabel = DAYS[jsDay - 1] || null;
+  strip.innerHTML = DAYS.map(day => `
+    <div class="week-day${day === todayLabel ? ' is-today' : ''}">
+      <div class="day-label">${day}</div>
+      <div class="day-plan">${escapeHtml(sheetData.weekPlan[day] || '')}</div>
+    </div>
+  `).join('');
+}
+
+/* ---------- Due Soon ---------- */
+function renderDueSoon() {
+  const list = document.getElementById('dueSoonList');
+  const todayStr = todayISO(0);
+  const twoWeeksStr = todayISO(14);
+  const items = Object.keys(sheetData.dueDates)
+    .filter(iso => iso >= todayStr && iso <= twoWeeksStr)
+    .sort()
+    .map(iso => ({ iso, text: sheetData.dueDates[iso] }));
+  if (!items.length) { list.innerHTML = '<div class="empty-note">Nothing due in the next two weeks.</div>'; return; }
+  list.innerHTML = items.map(item => {
+    const d = new Date(item.iso + 'T00:00:00');
+    const weekday = d.toLocaleDateString(undefined, { weekday: 'long' });
+    const dateLabel = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return `
+      <div class="mini-event-item${item.iso === todayStr ? ' today' : ''}">
+        <div class="mini-date-badge">${escapeHtml(dateLabel)}</div>
+        <div class="mini-event-body"><div style="font-weight:700; font-size:0.7rem;">${escapeHtml(weekday)}</div>${escapeHtml(item.text)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ---------- Coming Soon (events) ---------- */
+function formatEventDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+function renderEvents() {
+  const list = document.getElementById('eventsList');
+  const todayStr = todayISO(0);
+  const twoWeeksStr = todayISO(14);
+  const sorted = [...sheetData.events].sort((a, b) => a.date.localeCompare(b.date))
+    .filter(ev => ev.date >= todayStr && ev.date <= twoWeeksStr);
+  if (!sorted.length) { list.innerHTML = '<div class="empty-note">Nothing in the next two weeks.</div>'; return; }
+  list.innerHTML = sorted.map(ev => `
+    <div class="mini-event-item${ev.date === todayStr ? ' today' : ''}">
+      <div class="mini-date-badge">${formatEventDate(ev.date)}</div>
+      <div class="mini-event-body">${escapeHtml(ev.title)}${ev.note ? '<div class="mini-event-note">' + escapeHtml(ev.note) + '</div>' : ''}</div>
+    </div>
+  `).join('');
+}
+
+/* ---------- Missed Class? (handouts) ---------- */
+function renderHandouts() {
+  const list = document.getElementById('handoutsList');
+  const todayStr = todayISO(0);
+  const twoWeeksAgoStr = todayISO(-14);
+  const items = sheetData.handouts
+    .filter(h => h.date >= twoWeeksAgoStr && h.date <= todayStr)
+    .sort((a, b) => b.date.localeCompare(a.date));
+  if (!items.length) { list.innerHTML = '<div class="empty-note">Nothing posted in the last two weeks.</div>'; return; }
+  list.innerHTML = items.map(h => {
+    const d = new Date(h.date + 'T00:00:00');
+    const weekday = d.toLocaleDateString(undefined, { weekday: 'short' });
+    const dateLabel = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return `
+      <div class="mini-event-item${h.date === todayStr ? ' today' : ''}">
+        <div class="mini-date-badge">${escapeHtml(weekday)} ${escapeHtml(dateLabel)}</div>
+        <div class="mini-event-body">
+          ${h.classKey ? '<span style="font-weight:700; margin-right:6px;">' + escapeHtml(h.classKey) + '</span>' : ''}
+          <a href="${escapeHtml(h.link)}" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">${escapeHtml(h.title)}</a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ---------- Birthdays ---------- */
+function daysUntilBirthday(mmdd) {
+  const parts = mmdd.split('/').map(Number);
+  const mm = parts[0], dd = parts[1];
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let bday = new Date(now.getFullYear(), mm - 1, dd);
+  let diff = Math.round((bday - today) / 86400000);
+  if (diff < 0) { bday = new Date(now.getFullYear() + 1, mm - 1, dd); diff = Math.round((bday - today) / 86400000); }
+  return diff;
+}
+function renderBirthdays() {
+  const list = document.getElementById('birthdaysList');
+  const upcoming = sheetData.birthdays
+    .map(b => ({ name: b.name, mmdd: b.mmdd, days: daysUntilBirthday(b.mmdd) }))
+    .filter(b => b.days >= 0 && b.days <= 14)
+    .sort((a, b) => a.days - b.days);
+  if (!upcoming.length) { list.innerHTML = '<div class="empty-note">No birthdays in the next two weeks.</div>'; return; }
+  list.innerHTML = upcoming.map(b => {
+    const label = b.days === 0 ? 'Today!' : (b.days === 1 ? 'Tomorrow' : b.mmdd);
+    const firstName = b.name.trim().split(/\s+/)[0];
+    return `
+      <div class="mini-event-item${b.days === 0 ? ' today' : ''}">
+        <div class="mini-date-badge">${escapeHtml(label)}</div>
+        <div class="mini-event-body">${escapeHtml(firstName)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ---------- Roles & Rotations ---------- */
+function renderRoles() {
+  const container = document.getElementById('rolesContainer');
+  const keys = Object.keys(sheetData.roleRosters).filter(k => k.startsWith(activeRoleClassKey + '|'));
+  if (!keys.length) { container.innerHTML = '<div class="empty-note">No roles found for this class.</div>'; return; }
+  container.innerHTML = keys.map(key => {
+    const label = key.split('|')[1];
+    const roster = sheetData.roleRosters[key];
+    return `
+      <div class="role-block">
+        <div class="role-label">${escapeHtml(label)}</div>
+        <div class="role-roster">${roster.map(n => '<span class="name">' + escapeHtml(n) + '</span>').join('')}</div>
+      </div>
+    `;
+  }).join('');
+}
+document.getElementById('roleClassSelect').addEventListener('change', (e) => {
+  activeRoleClassKey = e.target.value;
+  renderRoles();
+});
+
+/* ---------- Google Sheets fetch (read-only) ---------- */
+function buildSheetTabUrl(tabName) {
+  return 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(tabName) + '&_=' + Date.now();
+}
+function parseCSV(text) {
+  const rows = []; let row = []; let field = ''; let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQuotes = false; }
+      else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c === '\r') { /* skip */ }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(cell => cell.trim() !== ''));
+}
+async function fetchTabRows(tabName) {
+  const resp = await fetch(buildSheetTabUrl(tabName));
+  if (!resp.ok) throw new Error(tabName + ' (' + resp.status + ')');
+  const text = await resp.text();
+  if (text.trim().startsWith('<')) throw new Error(tabName + ' not accessible');
+  return parseCSV(text);
+}
+
+async function syncFromSheet() {
+  const note = document.getElementById('syncNote');
+  note.textContent = 'Loading\u2026';
+  const warnings = [];
+
+  const tabs = ['Roles', 'Events', 'Classes', 'ClassTimes', 'MinimumDays', 'WeekPlan', 'MasterCalendarImport', 'Handouts'];
+  const results = {};
+  await Promise.all(tabs.map(async t => {
+    try { results[t] = await fetchTabRows(t); } catch (e) { warnings.push(e.message); results[t] = []; }
+  }));
+
+  // Roles: ClassKey, RoleLabel, StudentName
+  const roleRosters = {};
+  (results.Roles || []).slice(1).forEach(r => {
+    const classKey = (r[0] || '').trim(); const roleLabel = (r[1] || '').trim(); const name = (r[2] || '').trim();
+    if (!classKey || !roleLabel || !name) return;
+    const key = classKey + '|' + roleLabel;
+    if (!roleRosters[key]) roleRosters[key] = [];
+    roleRosters[key].push(name);
+  });
+  sheetData.roleRosters = roleRosters;
+
+  // Events: Title, Date, Note
+  const events = [];
+  (results.Events || []).slice(1).forEach((r, i) => {
+    const title = (r[0] || '').trim(); const dateRaw = (r[1] || '').trim(); const noteText = (r[2] || '').trim();
+    if (!title || !dateRaw) return;
+    const iso = normalizeDate(dateRaw);
+    if (!iso) return;
+    events.push({ id: 'ev-' + i, title, date: iso, note: noteText });
+  });
+  sheetData.events = events;
+
+  // Classes: ClassKey, StudentName, Birthday (MM/DD) -- birthdays only, no rosters needed here
+  const birthdays = [];
+  const seenKey = new Set();
+  (results.Classes || []).slice(1).forEach(r => {
+    const name = (r[1] || '').trim(); const mmdd = (r[2] || '').trim();
+    if (!name || !/^\d{2}\/\d{2}$/.test(mmdd)) return;
+    const key = name + '|' + mmdd;
+    if (seenKey.has(key)) return;
+    seenKey.add(key);
+    birthdays.push({ name, mmdd });
+  });
+  sheetData.birthdays = birthdays;
+
+  // ClassTimes: DayType, ClassKey, TimeBlocks, Note
+  const classTimes = [];
+  (results.ClassTimes || []).slice(1).forEach(r => {
+    const dayType = (r[0] || '').trim(); const classKey = (r[1] || '').trim();
+    const timeBlocks = (r[2] || '').trim(); const noteText = (r[3] || '').trim();
+    if (!dayType || !classKey || !timeBlocks) return;
+    classTimes.push({ dayType, classKey, timeBlocks, note: noteText });
+  });
+  sheetData.classTimes = classTimes;
+
+  // MinimumDays: Date, DayTypeOverride
+  const minimumDays = {};
+  (results.MinimumDays || []).slice(1).forEach(r => {
+    const iso = normalizeDate((r[0] || '').trim()); const override = (r[1] || '').trim();
+    if (!iso || !override) return;
+    minimumDays[iso] = override;
+  });
+  sheetData.minimumDays = minimumDays;
+
+  // WeekPlan: WeekGroup, Day, Plan (only "Humanities" group shown here)
+  const DAY_ALIASES = {
+    mon: 'Mon', monday: 'Mon', tue: 'Tue', tues: 'Tue', tuesday: 'Tue',
+    wed: 'Wed', weds: 'Wed', wednesday: 'Wed', thu: 'Thu', thur: 'Thu', thurs: 'Thu', thursday: 'Thu',
+    fri: 'Fri', friday: 'Fri'
+  };
+  const weekPlan = { Mon: '', Tue: '', Wed: '', Thu: '', Fri: '' };
+  (results.WeekPlan || []).slice(1).forEach(r => {
+    const group = (r[0] || '').trim(); const dayRaw = (r[1] || '').trim(); const plan = (r[2] || '').trim();
+    if (group.toLowerCase() !== 'humanities') return;
+    const dayKey = DAY_ALIASES[dayRaw.toLowerCase()];
+    if (dayKey) weekPlan[dayKey] = plan;
+  });
+  sheetData.weekPlan = weekPlan;
+
+  // MasterCalendarImport: Date (A), DayNumber (B), ... DUE (H)
+  const masterCalendarDayNumbers = {}; const dueDates = {};
+  (results.MasterCalendarImport || []).slice(1).forEach(r => {
+    const iso = normalizeDate((r[0] || '').trim()); const dayNum = (r[1] || '').trim(); const dueText = (r[7] || '').trim();
+    if (!iso) return;
+    if (dayNum) masterCalendarDayNumbers[iso] = dayNum;
+    if (dueText) dueDates[iso] = dueText;
+  });
+  sheetData.masterCalendarDayNumbers = masterCalendarDayNumbers;
+  sheetData.dueDates = dueDates;
+
+  // Handouts: Date, ClassKey, Title, Link
+  const handouts = [];
+  (results.Handouts || []).slice(1).forEach(r => {
+    const iso = normalizeDate((r[0] || '').trim()); const classKey = (r[1] || '').trim();
+    const title = (r[2] || '').trim(); const link = (r[3] || '').trim();
+    if (!iso || !title || !/^https?:\/\//i.test(link)) return;
+    handouts.push({ date: iso, classKey, title, link });
+  });
+  sheetData.handouts = handouts;
+
+  renderTodaySchedule(); renderWeekStrip(); renderDueSoon(); renderEvents();
+  renderHandouts(); renderBirthdays(); renderRoles(); renderSchoolDayCounter();
+
+  const t = new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  note.textContent = warnings.length
+    ? ('Last updated ' + t + ' \u2014 some info may be out of date.')
+    : ('Last updated ' + t + '. This page refreshes automatically every 5 minutes.');
+}
+
+syncFromSheet();
+setInterval(syncFromSheet, REFRESH_MS);
+</script>
+
+</body>
+</html>
